@@ -1,7 +1,7 @@
 # TRỢ LÝ ẢO HỖ TRỢ HỌC TẬP VÀ LẬP LỘ TRÌNH HỌC TẬP
-# Họ và tên: Vương Huy Hoàng
-# MSSV: 65131148
-# Lớp 65.CNTT-2
+Họ và tên: Vương Huy Hoàng
+MSSV: 65131148
+Lớp 65.CNTT-2
 - Mô tả đề tài: Cung cấp một trợ lý cá nhân trên điện thoại giúp sinh viên tối ưu hóa việc học. Ứng dụng sẽ "đọc" tài liệu của người dùng, hiểu nội dung và từ đó tạo ra công cụ ôn tập (flashcard, quiz) hoặc lên lịch trình học tập tự động.
 - Các tính năng chính: 
 + Quản lý tài liệu học tập: Cho phép upload file văn bản (TXT, PDF) hoặc dán text trực tiếp vào ứng dụng.

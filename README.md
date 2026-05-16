@@ -1,4 +1,4 @@
-# TRỢ LÝ ẢO HỖ TRỢ HỌC TẬP VÀ LẬP LỘ TRÌNH HỌC TẬP
+# TRỢ LÝ ẢO HỖ TRỢ Ôn Thi VÀ LẬP LỘ TRÌNH HỌC TẬP
 Họ và tên: Vương Huy Hoàng  
 MSSV: 65131148  
 Lớp 65.CNTT-2  

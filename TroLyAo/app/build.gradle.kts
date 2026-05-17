@@ -1,3 +1,4 @@
+import java.util.Properties // Thêm dòng import này ở trên cùng
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -9,7 +10,9 @@ android {
             minorApiLevel = 1
         }
     }
-
+    buildFeatures {
+        buildConfig = true
+    }
     defaultConfig {
         applicationId = "ThiCK.vuonghuyhoang.androidapp"
         minSdk = 24
@@ -18,6 +21,17 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ĐOẠN ĐỌC FILE LOCAL.PROPERTIES ĐÃ ĐƯỢC SỬA LỖI:
+        val properties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            properties.load(localPropertiesFile.inputStream())
+        }
+
+        // Lấy Key và tự động thêm dấu ngoặc kép "\"KEY\"" để Java hiểu đây là một chuỗi (String)
+        val apiKey = properties.getProperty("GEMINI_API_KEY") ?: "KEY_NOT_FOUND"
+        buildConfigField("String", "GEMINI_API_KEY", "\"$apiKey\"")
     }
 
     buildTypes {
@@ -36,6 +50,9 @@ android {
 }
 
 dependencies {
+    // Thư viện xử lý mạng và JSON
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.google.code.gson:gson:2.10.1")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

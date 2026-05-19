@@ -5,15 +5,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.ArrayList;
 import java.util.List;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import ThiCK.vuonghuyhoang.androidapp.network.AiCallback;
 import ThiCK.vuonghuyhoang.androidapp.network.GeminiClient;
@@ -28,7 +32,6 @@ public class ChatFragment extends Fragment {
     private List<ChatMessage> messageList;
     private GeminiClient geminiClient;
 
-    // 3 BIẾN NÀY ĐỂ LÀM HIỆU ỨNG
     private android.os.Handler typingHandler = new android.os.Handler();
     private Runnable typingRunnable;
     private int dotCount = 0;
@@ -47,85 +50,118 @@ public class ChatFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 1. Ánh xạ các view
         recyclerChat = view.findViewById(R.id.recycler_chat);
         edtMessage = view.findViewById(R.id.edt_message);
         btnSend = view.findViewById(R.id.btn_send);
 
-        // 2. Cài đặt danh sách Chat
         messageList = new ArrayList<>();
         chatAdapter = new ChatAdapter(messageList);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(requireContext());
-        layoutManager.setStackFromEnd(true); // Luôn đẩy danh sách từ dưới lên (giống Zalo/Messenger)
+        layoutManager.setStackFromEnd(true);
         recyclerChat.setLayoutManager(layoutManager);
         recyclerChat.setAdapter(chatAdapter);
 
-        // 3. Khởi tạo cầu nối với AI
         geminiClient = new GeminiClient();
 
-        // 4. Lời chào tự động khi vừa vào trang
         addMessageToChat("Xin chào! Tôi là Trợ lý học tập AI. Bạn muốn hỏi kiến thức chuyên môn hay cần phân rã đồ án hôm nay?", false);
 
-        // 5. Bắt sự kiện nút Gửi
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String question = edtMessage.getText().toString().trim();
-                if (question.isEmpty()) return; // Không cho gửi tin nhắn trống
+                if (question.isEmpty()) return;
 
-                // 1. In câu hỏi của bạn lên màn hình
                 addMessageToChat(question, true);
-                edtMessage.setText(""); // Xóa trắng ô nhập liệu
-
-                // Khóa nút Gửi để tránh người dùng bấm liên tục gây kẹt mạng
+                edtMessage.setText("");
                 btnSend.setEnabled(false);
 
-                // Tạo tin nhắn ảo ban đầu
                 ChatMessage thinkingMessage = new ChatMessage("⏳ AI đang suy nghĩ", false);
                 messageList.add(thinkingMessage);
                 int thinkingIndex = messageList.size() - 1;
                 chatAdapter.notifyItemInserted(thinkingIndex);
                 recyclerChat.scrollToPosition(thinkingIndex);
 
-                // ==========================================
-                // BẮT ĐẦU HIỆU ỨNG "SÓNG" DẤU CHẤM LỬNG
-                // ==========================================
                 dotCount = 0;
                 typingRunnable = new Runnable() {
                     @Override
                     public void run() {
                         dotCount++;
-                        if (dotCount > 3) dotCount = 1; // Chỉ cho chạy từ 1 đến 3 dấu chấm
-
-                        String dots = "";
-                        for (int i = 0; i < dotCount; i++) {
-                            dots += ".";
-                        }
-
-                        // Cập nhật lại chữ trên màn hình
+                        if (dotCount > 3) dotCount = 1;
+                        StringBuilder dots = new StringBuilder();
+                        for (int i = 0; i < dotCount; i++) dots.append(".");
                         messageList.set(thinkingIndex, new ChatMessage("⏳ AI đang suy nghĩ" + dots, false));
                         chatAdapter.notifyItemChanged(thinkingIndex);
-
-                        // Lặp lại hiệu ứng này sau mỗi 400 mili-giây (0.4s)
                         typingHandler.postDelayed(this, 400);
                     }
                 };
-                // Kích hoạt vòng lặp chạy ngay lập tức
                 typingHandler.post(typingRunnable);
-                // ==========================================
 
-                // Gửi câu hỏi lên Gemini AI
-                geminiClient.sendPrompt(question, new AiCallback() {
+                String systemInstruction = "\n\n[HƯỚNG DẪN HỆ THỐNG]: Nếu người dùng yêu cầu phân rã đồ án, lên lịch trình, hoặc tạo danh sách công việc, bạn PHẢI ĐÍNH KÈM một chuỗi JSON ở CUỐI bài viết of bạn theo đúng cấu trúc chính xác sau: "
+                        + "---TASK_START--- {\"tasks\": [{\"taskName\": \"Tên công việc cụ thể bằng tiếng Việt\", \"deadline\": \"dd/MM/yyyy - HH:mm\", \"priority\": \"Cao/Trung bình/Thấp\"}]} ---TASK_END---. "
+                        + "Hãy tính toán deadline hợp lý bắt đầu từ mốc thời gian thực tế hiện tại là tháng 05 năm 2026. Phần nội dung giải thích bằng văn bản ở trên hãy viết thật thân thiện và chi tiết để hiển thị cho người dùng.";
+
+                String finalPrompt = question + systemInstruction;
+
+                geminiClient.sendPrompt(finalPrompt, new AiCallback() {
                     @Override
                     public void onSuccess(String response) {
-                        requireActivity().runOnUiThread(new Runnable() {
+                        if (getActivity() == null || !isAdded()) return;
+
+                        getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                typingHandler.removeCallbacks(typingRunnable); // TẮT HIỆU ỨNG KHI CÓ KẾT QUẢ
+                                typingHandler.removeCallbacks(typingRunnable);
                                 btnSend.setEnabled(true);
 
-                                messageList.set(thinkingIndex, new ChatMessage(response, false));
+                                String cleanDisplayResponse = response;
+
+                                try {
+                                    if (response.contains("---TASK_START---") && response.contains("---TASK_END---")) {
+                                        int startIndex = response.indexOf("---TASK_START---") + "---TASK_START---".length();
+                                        int endIndex = response.indexOf("---TASK_END---");
+
+                                        String jsonString = response.substring(startIndex, endIndex).trim();
+                                        jsonString = jsonString.replace("```json", "").replace("```", "").trim();
+
+                                        JSONObject jsonObject = new JSONObject(jsonString);
+                                        JSONArray jsonArray = jsonObject.getJSONArray("tasks");
+
+                                        // 1. Kiểm tra tài khoản hiện tại để lấy UID trước khi ghi đè dữ liệu lên Firestore
+                                        FirebaseAuth auth = FirebaseAuth.getInstance();
+                                        if (auth.getCurrentUser() != null) {
+                                            String currentUid = auth.getCurrentUser().getUid();
+                                            FirebaseFirestore db = FirebaseFirestore.getInstance();
+                                            int tasksCreatedCount = 0;
+
+                                            for (int i = 0; i < jsonArray.length(); i++) {
+                                                JSONObject item = jsonArray.getJSONObject(i);
+                                                String name = item.getString("taskName");
+                                                String deadline = item.getString("deadline");
+                                                String priority = item.getString("priority");
+
+                                                int newId = (int) (System.currentTimeMillis() / 1000) + i;
+                                                StudyTask newTask = new StudyTask(newId, name, deadline, priority, false);
+
+                                                // PHÂN TÁCH CẤU TRÚC: users -> {uid} -> user_tasks -> {task_id}
+                                                db.collection("users")
+                                                        .document(currentUid)
+                                                        .collection("user_tasks")
+                                                        .document(String.valueOf(newId))
+                                                        .set(newTask);
+
+                                                tasksCreatedCount++;
+                                            }
+
+                                            cleanDisplayResponse = response.substring(0, response.indexOf("---TASK_START---")).trim();
+                                            cleanDisplayResponse += "\n\n🤖 *[Hệ thống]: Đã tự động phân tích và lưu thành công " + tasksCreatedCount + " nhiệm vụ mới vào không gian lưu trữ cá nhân của bạn trên Cloud Firestore!*";
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+
+                                messageList.set(thinkingIndex, new ChatMessage(cleanDisplayResponse, false));
                                 chatAdapter.notifyItemChanged(thinkingIndex);
                                 recyclerChat.scrollToPosition(thinkingIndex);
                             }
@@ -134,12 +170,13 @@ public class ChatFragment extends Fragment {
 
                     @Override
                     public void onError(String error) {
-                        requireActivity().runOnUiThread(new Runnable() {
+                        if (getActivity() == null || !isAdded()) return;
+
+                        getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                typingHandler.removeCallbacks(typingRunnable); // TẮT HIỆU ỨNG KHI BỊ LỖI MẠNG
+                                typingHandler.removeCallbacks(typingRunnable);
                                 btnSend.setEnabled(true);
-
                                 messageList.set(thinkingIndex, new ChatMessage("❌ Lỗi kết nối: " + error, false));
                                 chatAdapter.notifyItemChanged(thinkingIndex);
                             }
@@ -150,11 +187,9 @@ public class ChatFragment extends Fragment {
         });
     }
 
-    // Hàm phụ trợ để thêm tin nhắn vào danh sách và tự động cuộn xuống cuối
     private void addMessageToChat(String message, boolean isUser) {
         messageList.add(new ChatMessage(message, isUser));
         chatAdapter.notifyItemInserted(messageList.size() - 1);
         recyclerChat.scrollToPosition(messageList.size() - 1);
     }
 }
-

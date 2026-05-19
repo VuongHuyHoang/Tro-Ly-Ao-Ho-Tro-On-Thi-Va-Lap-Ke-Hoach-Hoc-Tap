@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "339834295177",
+    "project_id": "trolyaohotroonthi",
+    "storage_bucket": "trolyaohotroonthi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:339834295177:android:8feddbfdab90ef08550758",
+        "android_client_info": {
+          "package_name": "ThiCK.vuonghuyhoang.androidapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7ywsi-qvH_kbqPWk5K8ap9g6ucXqcTRs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

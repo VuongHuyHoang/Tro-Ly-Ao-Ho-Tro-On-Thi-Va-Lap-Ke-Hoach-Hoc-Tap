@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/surfaceColor"
+    android:padding="24dp">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:background="#E0E0E0"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="THÔNG TIN CHI TIẾT TÁC VỤ"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="@color/primaryColor"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:id="@+id/tv_detail_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tên công việc học tập"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/textColorPrimary"
+        android:layout_marginBottom="12dp"/>
+
+    <com.google.android.material.chip.Chip
+        android:id="@+id/chip_detail_priority"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Độ ưu tiên"
+        android:textColor="@color/primaryDarkColor"
+        app:chipBackgroundColor="#E3F2FD"
+        app:strokeWidth="0dp"
+        android:layout_marginBottom="12dp"/>
+
+    <TextView
+        android:id="@+id/tv_detail_deadline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Hạn chót: --/--/----"
+        android:textSize="14sp"
+        android:textColor="@color/textColorSecondary"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:id="@+id/tv_detail_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Trạng thái: --"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_close_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="Đóng bảng xem"
+        app:cornerRadius="12dp"/>
+</LinearLayout>

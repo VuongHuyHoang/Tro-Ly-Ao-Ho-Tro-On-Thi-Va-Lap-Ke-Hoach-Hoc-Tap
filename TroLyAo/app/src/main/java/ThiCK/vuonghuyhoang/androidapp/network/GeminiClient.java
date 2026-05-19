@@ -18,7 +18,6 @@ import ThiCK.vuonghuyhoang.androidapp.BuildConfig;
 
 public class GeminiClient {
 
-    // THAY API KEY CỦA BẠN VÀO DÒNG DƯỚI ĐÂY:
     private static final String API_KEY = BuildConfig.GEMINI_API_KEY;
 
     private static final String URL =

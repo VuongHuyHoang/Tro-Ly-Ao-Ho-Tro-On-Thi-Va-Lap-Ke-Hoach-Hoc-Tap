@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/backgroundColor"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TẠO QUIZ ÔN TẬP BẰNG AI"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/primaryColor"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Hãy dán nội dung bài học, định nghĩa, tài liệu hoặc ghi chú của bạn vào ô bên dưới. Trợ lý AI sẽ tự động đọc hiểu và biên soạn một bộ đề trắc nghiệm nhanh giúp bạn ôn luyện."
+        android:textSize="14sp"
+        android:textColor="@color/textColorSecondary"
+        android:layout_marginBottom="20dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="20dp"
+        app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp"
+        app:boxBackgroundColor="@color/surfaceColor">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edt_document_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="Nhập hoặc dán nội dung tài liệu tại đây (Tối thiểu 100 từ)..."
+            android:gravity="top"
+            android:inputType="textMultiLine"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_generate_quiz"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:text="🤖 AI Tạo Đề Trắc Nghiệm Tự Động"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:cornerRadius="12dp"/>
+</LinearLayout>

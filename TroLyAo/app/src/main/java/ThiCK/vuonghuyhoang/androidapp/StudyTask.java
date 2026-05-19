@@ -7,6 +7,9 @@ public class StudyTask {
     private String priority;
     private boolean isCompleted;
 
+    public StudyTask() {
+    }
+
     public StudyTask(int id, String taskName, String deadline, String priority, boolean isCompleted) {
         this.id = id;
         this.taskName = taskName;

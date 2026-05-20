@@ -29,6 +29,20 @@
                 android:textStyle="bold"
                 android:textColor="#1A1C1E"/>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_back_to_today"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hôm nay"
+                android:textColor="#1976D2"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="4dp"
+                app:icon="@android:drawable/ic_menu_today"
+                app:iconSize="16dp"
+                app:iconTint="#1976D2"/>
+
             <ImageButton
                 android:id="@+id/btn_previous_month"
                 android:layout_width="40dp"
@@ -47,42 +61,6 @@
                 android:contentDescription="Tháng sau"
                 app:tint="#44474E"/>
         </LinearLayout>
-
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/toggle_group_view_mode"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:checkedButton="@+id/btn_view_month"
-            app:singleSelection="true">
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_view_day"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Ngày"
-                android:textColor="#44474E"
-                android:textSize="13sp" />
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_view_week"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Tuần"
-                android:textColor="#44474E"
-                android:textSize="13sp" />
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_view_month"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Tháng"
-                android:textColor="#44474E"
-                android:textSize="13sp" />
-        </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <LinearLayout
             android:id="@+id/layout_weekday_header"

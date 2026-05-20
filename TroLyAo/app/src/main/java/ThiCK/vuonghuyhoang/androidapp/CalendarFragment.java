@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -29,17 +28,15 @@ import java.util.Locale;
 
 public class CalendarFragment extends Fragment {
 
+    private com.google.android.material.button.MaterialButton btnBackToToday;
     private TextView tvMonthYearTitle, tvSelectedDateHeader;
     private RecyclerView recyclerCalendarGrid, recyclerCalendarTasks;
-    // Đã thêm layoutEmptyState vào khai báo
-    private LinearLayout layoutAgendaSheet, layoutWeekdayHeader, layoutEmptyState;
+    private LinearLayout layoutAgendaSheet, layoutEmptyState;
     private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
-    private MaterialButtonToggleGroup toggleGroupViewMode;
     private ImageButton btnPreviousMonth, btnNextMonth;
 
     private TaskAdapter agendaAdapter;
     private CalendarGridAdapter calendarGridAdapter;
-    private GridLayoutManager gridLayoutManager;
 
     private List<StudyTask> allTasksList = new ArrayList<>();
     private List<StudyTask> displayTasksList = new ArrayList<>();
@@ -47,7 +44,6 @@ public class CalendarFragment extends Fragment {
 
     private Calendar currentMonthCalendar = Calendar.getInstance();
     private Calendar currentSelectedDate = Calendar.getInstance();
-    private String currentViewMode = "MONTH";
 
     public CalendarFragment() {}
 
@@ -67,23 +63,38 @@ public class CalendarFragment extends Fragment {
         recyclerCalendarGrid = view.findViewById(R.id.recycler_calendar_grid);
         recyclerCalendarTasks = view.findViewById(R.id.recycler_calendar_tasks);
         layoutAgendaSheet = view.findViewById(R.id.layout_agenda_sheet);
-        layoutWeekdayHeader = view.findViewById(R.id.layout_weekday_header);
-        toggleGroupViewMode = view.findViewById(R.id.toggle_group_view_mode);
         btnPreviousMonth = view.findViewById(R.id.btn_previous_month);
         btnNextMonth = view.findViewById(R.id.btn_next_month);
-
-        // TÍNH NĂNG MỚI: Ánh xạ giao diện Trạng thái trống
         layoutEmptyState = view.findViewById(R.id.layout_empty_state);
+        btnBackToToday = view.findViewById(R.id.btn_back_to_today);
 
         bottomSheetBehavior = BottomSheetBehavior.from(layoutAgendaSheet);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        // Khởi tạo danh sách chi tiết công việc
+        // TÍNH NĂNG MỚI: Lắng nghe chuyển động của khung Bottom Sheet
+        bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                if (newState == BottomSheetBehavior.STATE_HIDDEN) {
+                    // Khi người dùng vuốt ẩn khung đi -> Trả lịch về dạng lưới to
+                    if (calendarGridAdapter != null) calendarGridAdapter.setCompactMode(false);
+                } else if (newState == BottomSheetBehavior.STATE_COLLAPSED || newState == BottomSheetBehavior.STATE_EXPANDED) {
+                    // Khi khung công việc hiện lên -> Ép lịch co rút lại
+                    if (calendarGridAdapter != null) calendarGridAdapter.setCompactMode(true);
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                // Không cần xử lý hiệu ứng trượt giữa chừng
+            }
+        });
+
         agendaAdapter = new TaskAdapter(displayTasksList);
         recyclerCalendarTasks.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerCalendarTasks.setAdapter(agendaAdapter);
 
-        // TÍNH NĂNG MỚI: Vuốt sang trái để xóa công việc (Swipe to Delete)
+        // Chức năng vuốt xóa công việc
         new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
             @Override
             public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
@@ -95,35 +106,25 @@ public class CalendarFragment extends Fragment {
                 int position = viewHolder.getAdapterPosition();
                 StudyTask taskToDelete = displayTasksList.get(position);
 
-                // HIỂN THỊ HỘP THOẠI XÁC NHẬN TRƯỚC KHI XÓA
                 new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                         .setTitle("Xác nhận xóa công việc")
                         .setMessage("Bạn có chắc chắn muốn xóa \"" + taskToDelete.getTaskName() + "\" không? Thao tác này không thể hoàn tác.")
-                        .setCancelable(false) // Buộc người dùng phải chọn 1 trong 2 nút, không cho bấm ra ngoài để tắt
+                        .setCancelable(false)
                         .setPositiveButton("Xóa", (dialog, which) -> {
-                            // LỰA CHỌN 1: Người dùng đồng ý xóa
                             displayTasksList.remove(position);
                             agendaAdapter.notifyItemRemoved(position);
                             checkEmptyState();
 
-                            // Tiến hành xóa dữ liệu trên Firebase Firestore
                             FirebaseAuth auth = FirebaseAuth.getInstance();
                             if (auth.getCurrentUser() != null) {
                                 String currentUid = auth.getCurrentUser().getUid();
                                 String documentId = String.valueOf(taskToDelete.getId());
-
                                 if (documentId.equals("null") || documentId.equals("0")) {
                                     documentId = taskToDelete.getTaskName();
                                 }
-
-                                FirebaseFirestore.getInstance()
-                                        .collection("users")
-                                        .document(currentUid)
-                                        .collection("user_tasks")
-                                        .document(documentId)
-                                        .delete()
+                                FirebaseFirestore.getInstance().collection("users").document(currentUid)
+                                        .collection("user_tasks").document(documentId).delete()
                                         .addOnFailureListener(e -> {
-                                            // Nếu lỗi mạng không xóa được -> Hoàn tác lại giao diện
                                             displayTasksList.add(position, taskToDelete);
                                             agendaAdapter.notifyItemInserted(position);
                                             checkEmptyState();
@@ -131,53 +132,49 @@ public class CalendarFragment extends Fragment {
                             }
                         })
                         .setNegativeButton("Hủy", (dialog, which) -> {
-                            // LỰA CHỌN 2: Người dùng lỡ tay vuốt nhầm và bấm Hủy
-                            // Ra lệnh cho Adapter nạp lại dòng này để dòng chữ trượt đóng ngược trở lại vị trí cũ
                             agendaAdapter.notifyItemChanged(position);
                             dialog.dismiss();
-                        })
-                        .show();
+                        }).show();
             }
         }).attachToRecyclerView(recyclerCalendarTasks);
 
-        // Quản lý Grid Layout linh hoạt
-        gridLayoutManager = new GridLayoutManager(requireContext(), 7);
-        recyclerCalendarGrid.setLayoutManager(gridLayoutManager);
+        // Lưới lịch mặc định luôn là 7 cột
+        recyclerCalendarGrid.setLayoutManager(new GridLayoutManager(requireContext(), 7));
 
         calendarGridAdapter = new CalendarGridAdapter(daysInGridList, allTasksList, currentMonthCalendar.get(Calendar.MONTH), date -> {
             currentSelectedDate = (Calendar) date.clone();
-            if (currentViewMode.equals("DAY")) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-            } else if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
+            calendarGridAdapter.setSelectedDate(currentSelectedDate);
+
+            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
             filterAndDisplayTasks();
         });
         recyclerCalendarGrid.setAdapter(calendarGridAdapter);
 
+        calendarGridAdapter.setSelectedDate(currentSelectedDate);
+
+        // Nút trở về Hôm nay
+        btnBackToToday.setOnClickListener(v -> {
+            currentMonthCalendar = Calendar.getInstance();
+            currentSelectedDate = Calendar.getInstance();
+            calendarGridAdapter.setSelectedDate(currentSelectedDate);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            refreshCalendarState();
+        });
+
+        // Nút qua Tháng trước
         btnPreviousMonth.setOnClickListener(v -> {
-            if (currentViewMode.equals("MONTH")) {
-                currentMonthCalendar.add(Calendar.MONTH, -1);
-            } else if (currentViewMode.equals("WEEK")) {
-                currentMonthCalendar.add(Calendar.WEEK_OF_YEAR, -1);
-            } else {
-                currentSelectedDate.add(Calendar.DAY_OF_MONTH, -1);
-            }
+            currentMonthCalendar.add(Calendar.MONTH, -1);
             refreshCalendarState();
         });
 
+        // Nút sang Tháng sau
         btnNextMonth.setOnClickListener(v -> {
-            if (currentViewMode.equals("MONTH")) {
-                currentMonthCalendar.add(Calendar.MONTH, 1);
-            } else if (currentViewMode.equals("WEEK")) {
-                currentMonthCalendar.add(Calendar.WEEK_OF_YEAR, 1);
-            } else {
-                currentSelectedDate.add(Calendar.DAY_OF_MONTH, 1);
-            }
+            currentMonthCalendar.add(Calendar.MONTH, 1);
             refreshCalendarState();
         });
 
-        setupViewModeToggle();
         refreshCalendarState();
         loadTasksFromFirestore();
     }
@@ -188,70 +185,38 @@ public class CalendarFragment extends Fragment {
         filterAndDisplayTasks();
     }
 
-    private void setupViewModeToggle() {
-        toggleGroupViewMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) return;
-
-            if (checkedId == R.id.btn_view_month) {
-                currentViewMode = "MONTH";
-                gridLayoutManager.setSpanCount(7);
-                layoutWeekdayHeader.setVisibility(View.VISIBLE);
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-            } else if (checkedId == R.id.btn_view_week) {
-                currentViewMode = "WEEK";
-                gridLayoutManager.setSpanCount(7);
-                layoutWeekdayHeader.setVisibility(View.VISIBLE);
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-            } else if (checkedId == R.id.btn_view_day) {
-                currentViewMode = "DAY";
-                gridLayoutManager.setSpanCount(1);
-                layoutWeekdayHeader.setVisibility(View.GONE);
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-            }
-            refreshCalendarState();
-        });
-    }
-
+    // Hiển thị chuẩn chỉ chữ "Tháng MM năm YYYY"
     private void updateHeaderTitle() {
         SimpleDateFormat sdfMonth = new SimpleDateFormat("'Tháng' MM 'năm' yyyy", new Locale("vi", "VN"));
-        if (currentViewMode.equals("MONTH")) {
-            tvMonthYearTitle.setText(sdfMonth.format(currentMonthCalendar.getTime()));
-        } else if (currentViewMode.equals("WEEK")) {
-            int weekOfYear = currentMonthCalendar.get(Calendar.WEEK_OF_YEAR);
-            tvMonthYearTitle.setText("Tuần " + weekOfYear + " (" + (currentMonthCalendar.get(Calendar.MONTH) + 1) + "/" + currentMonthCalendar.get(Calendar.YEAR) + ")");
-        } else {
-            SimpleDateFormat sdfDay = new SimpleDateFormat("dd 'Tháng' MM, yyyy", new Locale("vi", "VN"));
-            tvMonthYearTitle.setText("Ngày " + sdfDay.format(currentSelectedDate.getTime()));
-        }
+        tvMonthYearTitle.setText(sdfMonth.format(currentMonthCalendar.getTime()));
     }
 
+    // Sinh luôn 42 ô lịch cố định cho Tháng
     private void generateCalendarGrid() {
         daysInGridList.clear();
         Calendar calendar = (Calendar) currentMonthCalendar.clone();
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        int firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+        int spacesBefore = firstDayOfWeek - 1;
 
-        if (currentViewMode.equals("MONTH")) {
-            calendar.set(Calendar.DAY_OF_MONTH, 1);
-            int firstDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
-            int spacesBefore = firstDayOfWeek - 1;
-
-            calendar.add(Calendar.DAY_OF_MONTH, -spacesBefore);
-            while (daysInGridList.size() < 42) {
-                daysInGridList.add((Calendar) calendar.clone());
-                calendar.add(Calendar.DAY_OF_MONTH, 1);
-            }
-        } else if (currentViewMode.equals("WEEK")) {
-            int currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
-            calendar.add(Calendar.DAY_OF_MONTH, -(currentDayOfWeek - 1));
-            for (int i = 0; i < 7; i++) {
-                daysInGridList.add((Calendar) calendar.clone());
-                calendar.add(Calendar.DAY_OF_MONTH, 1);
-            }
-        } else {
-            daysInGridList.add((Calendar) currentSelectedDate.clone());
+        calendar.add(Calendar.DAY_OF_MONTH, -spacesBefore);
+        while (daysInGridList.size() < 42) {
+            daysInGridList.add((Calendar) calendar.clone());
+            calendar.add(Calendar.DAY_OF_MONTH, 1);
         }
 
         if (calendarGridAdapter != null) {
-            calendarGridAdapter.notifyDataSetChanged();
+            // Cập nhật lại thuộc tính tháng hiện tại để mờ bớt ngày tháng trước/sau
+            calendarGridAdapter = new CalendarGridAdapter(daysInGridList, allTasksList, currentMonthCalendar.get(Calendar.MONTH), date -> {
+                currentSelectedDate = (Calendar) date.clone();
+                calendarGridAdapter.setSelectedDate(currentSelectedDate);
+                if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                }
+                filterAndDisplayTasks();
+            });
+            calendarGridAdapter.setSelectedDate(currentSelectedDate);
+            recyclerCalendarGrid.setAdapter(calendarGridAdapter);
         }
     }
 
@@ -265,7 +230,6 @@ public class CalendarFragment extends Fragment {
                 .collection("user_tasks")
                 .addSnapshotListener((value, error) -> {
                     if (error != null || value == null) return;
-
                     allTasksList.clear();
                     for (DocumentSnapshot doc : value.getDocuments()) {
                         StudyTask task = doc.toObject(StudyTask.class);
@@ -308,10 +272,9 @@ public class CalendarFragment extends Fragment {
         });
 
         agendaAdapter.notifyDataSetChanged();
-        checkEmptyState(); // TÍNH NĂNG MỚI: Cập nhật UI nếu không có việc
+        checkEmptyState();
     }
 
-    // TÍNH NĂNG MỚI: Hàm kiểm tra ẩn/hiện giao diện trống
     private void checkEmptyState() {
         if (displayTasksList.isEmpty()) {
             recyclerCalendarTasks.setVisibility(View.GONE);

@@ -98,9 +98,10 @@ public class ChatFragment extends Fragment {
                 };
                 typingHandler.post(typingRunnable);
 
-                String systemInstruction = "\n\n[HƯỚNG DẪN HỆ THỐNG]: Nếu người dùng yêu cầu phân rã đồ án, lên lịch trình, hoặc tạo danh sách công việc, bạn PHẢI ĐÍNH KÈM một chuỗi JSON ở CUỐI bài viết of bạn theo đúng cấu trúc chính xác sau: "
-                        + "---TASK_START--- {\"tasks\": [{\"taskName\": \"Tên công việc cụ thể bằng tiếng Việt\", \"deadline\": \"dd/MM/yyyy - HH:mm\", \"priority\": \"Cao/Trung bình/Thấp\"}]} ---TASK_END---. "
-                        + "Hãy tính toán deadline hợp lý bắt đầu từ mốc thời gian thực tế hiện tại là tháng 05 năm 2026. Phần nội dung giải thích bằng văn bản ở trên hãy viết thật thân thiện và chi tiết để hiển thị cho người dùng.";
+                // --- BƯỚC 1: CẬP NHẬT PROMPT ĐỂ ÉP AI XUẤT RA JSON CHỨA "dueTime" VÀ "estimatedMinutes" ---
+                String systemInstruction = "\n\n[HƯỚNG DẪN HỆ THỐNG]: Nếu người dùng yêu cầu phân rã đồ án, lên lịch trình, hoặc tạo danh sách công việc, bạn PHẢI ĐÍNH KÈM một chuỗi JSON ở CUỐI bài viết của bạn theo đúng cấu trúc chính xác sau: "
+                        + "---TASK_START--- {\"tasks\": [{\"taskName\": \"Tên công việc cụ thể\", \"deadline\": \"dd/MM/yyyy\", \"dueTime\": \"HH:mm\", \"estimatedMinutes\": 60, \"priority\": \"Cao/Trung bình/Thấp\"}]} ---TASK_END---. "
+                        + "Hãy phân rã công việc thật chi tiết, tính toán deadline và giờ giấc (dueTime) hợp lý, đồng thời DỰ ĐOÁN số phút cần thiết để hoàn thành (estimatedMinutes) cho từng tác vụ. Mốc thời gian thực tế hiện tại là tháng 05 năm 2026. Phần nội dung giải thích bằng văn bản ở trên hãy viết thật thân thiện.";
 
                 String finalPrompt = question + systemInstruction;
 
@@ -128,7 +129,6 @@ public class ChatFragment extends Fragment {
                                         JSONObject jsonObject = new JSONObject(jsonString);
                                         JSONArray jsonArray = jsonObject.getJSONArray("tasks");
 
-                                        // 1. Kiểm tra tài khoản hiện tại để lấy UID trước khi ghi đè dữ liệu lên Firestore
                                         FirebaseAuth auth = FirebaseAuth.getInstance();
                                         if (auth.getCurrentUser() != null) {
                                             String currentUid = auth.getCurrentUser().getUid();
@@ -137,14 +137,21 @@ public class ChatFragment extends Fragment {
 
                                             for (int i = 0; i < jsonArray.length(); i++) {
                                                 JSONObject item = jsonArray.getJSONObject(i);
+
+                                                // --- BƯỚC 2: BÓC TÁCH JSON MỚI & BẮT LỖI PHÒNG THỦ ---
                                                 String name = item.getString("taskName");
                                                 String deadline = item.getString("deadline");
                                                 String priority = item.getString("priority");
 
-                                                int newId = (int) (System.currentTimeMillis() / 1000) + i;
-                                                StudyTask newTask = new StudyTask(newId, name, deadline, priority, false);
+                                                // Dùng optString/optInt để tránh crash nếu AI quên tạo trường này
+                                                String dueTime = item.has("dueTime") ? item.getString("dueTime") : "23:59";
+                                                int estimatedMinutes = item.has("estimatedMinutes") ? item.getInt("estimatedMinutes") : 60;
 
-                                                // PHÂN TÁCH CẤU TRÚC: users -> {uid} -> user_tasks -> {task_id}
+                                                int newId = (int) (System.currentTimeMillis() / 1000) + i;
+
+                                                // --- BƯỚC 3: DÙNG CONSTRUCTOR MỚI (7 THAM SỐ) ---
+                                                StudyTask newTask = new StudyTask(newId, name, deadline, dueTime, estimatedMinutes, priority, false);
+
                                                 db.collection("users")
                                                         .document(currentUid)
                                                         .collection("user_tasks")
@@ -155,7 +162,7 @@ public class ChatFragment extends Fragment {
                                             }
 
                                             cleanDisplayResponse = response.substring(0, response.indexOf("---TASK_START---")).trim();
-                                            cleanDisplayResponse += "\n\n🤖 *[Hệ thống]: Đã tự động phân tích và lưu thành công " + tasksCreatedCount + " nhiệm vụ mới vào không gian lưu trữ cá nhân của bạn trên Cloud Firestore!*";
+                                            cleanDisplayResponse += "\n\n🤖 *[Hệ thống]: Đã tự động phân tích và lưu thành công " + tasksCreatedCount + " nhiệm vụ (đã dự phóng thời lượng) vào danh sách công việc của bạn!*";
                                         }
                                     }
                                 } catch (Exception e) {

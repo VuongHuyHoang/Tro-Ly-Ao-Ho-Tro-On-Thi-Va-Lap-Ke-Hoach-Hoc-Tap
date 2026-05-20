@@ -19,12 +19,15 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class HomeFragment extends Fragment {
 
@@ -200,7 +203,11 @@ public class HomeFragment extends Fragment {
         MaterialButton btnCloseSheet = sheetView.findViewById(R.id.btn_close_sheet);
 
         tvDetailTitle.setText(task.getTaskName());
-        tvDetailDeadline.setText("Hạn định hoàn thành: " + task.getDeadline());
+        // Lấy giờ an toàn (nếu null thì mặc định 23:59)
+        String timeStr = (task.getDueTime() != null && !task.getDueTime().isEmpty()) ? task.getDueTime() : "23:59";
+
+        // Hiển thị chuẩn form: Hạn chót: 14:30 - 25/05/2026
+        tvDetailDeadline.setText("Hạn chót: " + timeStr + " - " + task.getDeadline());
         chipDetailPriority.setText("Độ ưu tiên: " + task.getPriority());
 
         if (task.isCompleted()) {
@@ -216,45 +223,65 @@ public class HomeFragment extends Fragment {
         bottomSheetDialog.show();
     }
 
-    // TÍCH HỢP: Hàm hiển thị Bottom Sheet để thêm Task thủ công
+    // TÍCH HỢP: Hàm hiển thị Bottom Sheet để thêm Task thủ công (ĐÃ NÂNG CẤP THÊM GIỜ & THỜI LƯỢNG)
     private void showAddTaskBottomSheet() {
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
         View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.layout_bottom_sheet_add_task, null);
 
-        com.google.android.material.textfield.TextInputEditText edtName = sheetView.findViewById(R.id.edt_task_name);
-        com.google.android.material.textfield.TextInputEditText edtDeadline = sheetView.findViewById(R.id.edt_task_deadline);
-        android.widget.RadioGroup radioGroupPriority = sheetView.findViewById(R.id.radio_group_priority);
+        TextInputEditText edtName = sheetView.findViewById(R.id.edt_task_name);
+        TextInputEditText edtDeadline = sheetView.findViewById(R.id.edt_task_deadline);
+        RadioGroup radioGroupPriority = sheetView.findViewById(R.id.radio_group_priority);
         MaterialButton btnSave = sheetView.findViewById(R.id.btn_save_new_task);
+
+        // 1. ÁNH XẠ 2 Ô NHẬP MỚI
+        TextInputEditText edtTime = sheetView.findViewById(R.id.edt_task_time);
+        TextInputEditText edtEstimated = sheetView.findViewById(R.id.edt_task_estimated_minutes);
+
+        // 2. KÍCH HOẠT BẢNG CHỌN GIỜ KHI BẤM VÀO Ô NHẬP GIỜ
+        if (edtTime != null) {
+            // Chặn bàn phím ảo bật lên, chỉ cho phép bấm để mở bảng chọn giờ
+            edtTime.setFocusable(false);
+            edtTime.setClickable(true);
+            edtTime.setOnClickListener(v -> showTimePicker(edtTime));
+        }
 
         btnSave.setOnClickListener(v -> {
             String taskName = edtName.getText().toString().trim();
             String deadline = edtDeadline.getText().toString().trim();
+
+            // Lấy dữ liệu Giờ và Thời lượng (nếu trống thì gán mặc định 23:59 và 60 phút)
+            String dueTime = (edtTime != null && edtTime.getText() != null && !edtTime.getText().toString().isEmpty())
+                    ? edtTime.getText().toString().trim() : "23:59";
+
+            String estimatedStr = (edtEstimated != null && edtEstimated.getText() != null && !edtEstimated.getText().toString().isEmpty())
+                    ? edtEstimated.getText().toString().trim() : "60";
 
             if (taskName.isEmpty() || deadline.isEmpty()) {
                 Toast.makeText(requireContext(), "Vui lòng nhập đầy đủ tên và hạn chót!", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Lấy giá trị độ ưu tiên từ RadioButton
+            // Ép kiểu chuỗi phút sang số nguyên (int)
+            int estimatedMinutes = 60;
+            try {
+                estimatedMinutes = Integer.parseInt(estimatedStr);
+            } catch (NumberFormatException e) {
+                // Bỏ qua lỗi nếu người dùng nhập linh tinh
+            }
+
             String priority = "Trung bình";
             int checkedId = radioGroupPriority.getCheckedRadioButtonId();
-            if (checkedId == R.id.rb_high) {
-                priority = "Cao";
-            } else if (checkedId == R.id.rb_low) {
-                priority = "Thấp";
-            }
+            if (checkedId == R.id.rb_high) priority = "Cao";
+            else if (checkedId == R.id.rb_low) priority = "Thấp";
 
             FirebaseAuth auth = FirebaseAuth.getInstance();
             if (auth.getCurrentUser() != null) {
                 String currentUid = auth.getCurrentUser().getUid();
-
-                // Sinh ID duy nhất bằng timestamp
                 int newTaskId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
 
-                // ĐÃ SỬA CHỖ NÀY: Dùng Constructor đầy đủ tham số cho khớp với StudyTask của bạn
-                StudyTask newTask = new StudyTask(newTaskId, taskName, deadline, priority, false);
+                // 3. SỬ DỤNG CONSTRUCTOR MỚI: Truyền đủ 7 tham số để chuẩn bị cho Thuật toán tối ưu
+                StudyTask newTask = new StudyTask(newTaskId, taskName, deadline, dueTime, estimatedMinutes, priority, false);
 
-                // Lưu lên Firestore
                 FirebaseFirestore.getInstance()
                         .collection("users")
                         .document(currentUid)
@@ -273,4 +300,19 @@ public class HomeFragment extends Fragment {
         bottomSheetDialog.show();
     }
 
+    private void showTimePicker(TextView tvTarget) {
+        MaterialTimePicker picker = new MaterialTimePicker.Builder()
+                .setTimeFormat(TimeFormat.CLOCK_24H)
+                .setHour(12)
+                .setMinute(0)
+                .setTitleText("Chọn giờ hạn chót")
+                .build();
+
+        picker.show(getChildFragmentManager(), "TIME_PICKER");
+
+        picker.addOnPositiveButtonClickListener(v -> {
+            String time = String.format(Locale.getDefault(), "%02d:%02d", picker.getHour(), picker.getMinute());
+            tvTarget.setText(time);
+        });
+    }
 }

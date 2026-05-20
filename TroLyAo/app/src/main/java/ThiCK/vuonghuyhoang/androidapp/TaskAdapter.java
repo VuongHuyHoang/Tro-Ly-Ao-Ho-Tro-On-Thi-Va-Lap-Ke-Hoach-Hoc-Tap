@@ -42,6 +42,54 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         holder.checkBox.setOnCheckedChangeListener(null);
         holder.checkBox.setChecked(task.isCompleted());
 
+        // --- CẬP NHẬT GÁN TEXT HẠN CHÓT ---
+        String timeStr = (task.getDueTime() != null && !task.getDueTime().isEmpty()) ? task.getDueTime() : "23:59";
+        holder.tvDeadline.setText(timeStr + " - " + task.getDeadline());
+
+        // THỰC HIỆN: NHUỘM MÀU "DEADLINE DÍ" ---
+        try {
+            // Lấy thời gian hiện tại của hệ thống
+            java.util.Calendar currentCal = java.util.Calendar.getInstance();
+
+            // Tạo đối tượng Calendar đại diện cho thời gian Deadline của Task
+            java.util.Calendar taskCal = java.util.Calendar.getInstance();
+
+            // Định dạng để phân tích chuỗi Ngày và Giờ
+            // Lưu ý: Định dạng phải khớp chính xác với cách bạn lưu (dd/MM/yyyy HH:mm)
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault());
+
+            // Ghép Ngày và Giờ lại để parse
+            String combinedDateTimeStr = task.getDeadline() + " " + timeStr;
+            taskCal.setTime(sdf.parse(combinedDateTimeStr));
+
+            // Tính toán khoảng cách thời gian (tính bằng mili-giây)
+            long diffInMillis = taskCal.getTimeInMillis() - currentCal.getTimeInMillis();
+
+            // Định nghĩa ngưỡng 2 tiếng (2 * 60 phút * 60 giây * 1000 mili-giây)
+            long twoHoursInMillis = 2 * 60 * 60 * 1000;
+
+            // KIỂM TRA ĐIỀU KIỆN
+            if (diffInMillis < 0) {
+                // Trường hợp 1: Đã quá hạn rồi! -> Nhuộm màu Đỏ đậm sắc nét
+                holder.tvDeadline.setTextColor(android.graphics.Color.parseColor("#C62828"));
+                holder.tvDeadline.setText("⚠️ ĐÃ QUÁ HẠN: " + timeStr + " - " + task.getDeadline());
+
+            } else if (diffInMillis <= twoHoursInMillis) {
+                // Trường hợp 2: Deadline dí! (Trong vòng 2 tiếng tới) -> Nhuộm màu Cam đỏ khẩn cấp
+                holder.tvDeadline.setTextColor(android.graphics.Color.parseColor("#F4511E"));
+                // Bạn có thể thêm icon đồng hồ cát nhỏ nếu muốn
+
+            } else {
+                // Trường hợp 3: Còn dư dả thời gian -> Trả về màu xám nhạt cơ bản
+                holder.tvDeadline.setTextColor(android.graphics.Color.parseColor("#757575"));
+            }
+
+        } catch (Exception e) {
+            // Nếu parse bị lỗi (do dữ liệu ngày tháng sai định dạng), giữ nguyên màu xám
+            holder.tvDeadline.setTextColor(android.graphics.Color.parseColor("#757575"));
+            e.printStackTrace();
+        }
+
         // Đọc mã màu Pastel trực tiếp từ resources để đảm bảo hiển thị đồng bộ
         int colorHigh = holder.itemView.getContext().getResources().getColor(R.color.pastel_high);
         int colorMedium = holder.itemView.getContext().getResources().getColor(R.color.pastel_medium);

@@ -28,7 +28,7 @@ import java.util.Locale;
 
 public class CalendarFragment extends Fragment {
 
-    private com.google.android.material.button.MaterialButton btnBackToToday;
+    private com.google.android.material.button.MaterialButton btnBackToToday, btnSmartSuggest;
     private TextView tvMonthYearTitle, tvSelectedDateHeader;
     private RecyclerView recyclerCalendarGrid, recyclerCalendarTasks;
     private LinearLayout layoutAgendaSheet, layoutEmptyState;
@@ -66,7 +66,11 @@ public class CalendarFragment extends Fragment {
         btnPreviousMonth = view.findViewById(R.id.btn_previous_month);
         btnNextMonth = view.findViewById(R.id.btn_next_month);
         layoutEmptyState = view.findViewById(R.id.layout_empty_state);
+        btnSmartSuggest = view.findViewById(R.id.btn_smart_suggest);
+        btnSmartSuggest.setOnClickListener(v -> showOptimizationDialog());
+
         btnBackToToday = view.findViewById(R.id.btn_back_to_today);
+
 
         bottomSheetBehavior = BottomSheetBehavior.from(layoutAgendaSheet);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
@@ -283,5 +287,68 @@ public class CalendarFragment extends Fragment {
             recyclerCalendarTasks.setVisibility(View.VISIBLE);
             layoutEmptyState.setVisibility(View.GONE);
         }
+    }
+    // TÍNH NĂNG MỚI: Hộp thoại và Logic Tối ưu hóa bằng AI / Giải thuật
+    private void showOptimizationDialog() {
+        // Lọc ra danh sách task chưa hoàn thành trong ngày đang chọn
+        List<StudyTask> pendingTasks = new ArrayList<>();
+        for (StudyTask t : displayTasksList) {
+            if (!t.isCompleted()) pendingTasks.add(t);
+        }
+
+        if (pendingTasks.isEmpty()) {
+            android.widget.Toast.makeText(getContext(), "Không có công việc nào cần tối ưu hôm nay!", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Tạo ô nhập liệu để hỏi thời gian rảnh
+        final android.widget.EditText input = new android.widget.EditText(requireContext());
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        input.setHint("Nhập số phút (VD: 120)");
+
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(requireContext());
+        layout.setPadding(60, 20, 60, 0);
+        layout.addView(input, new android.widget.LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Bạn rảnh bao nhiêu phút?")
+                .setMessage("Thuật toán Knapsack sẽ tính toán tổ hợp công việc mang lại hiệu suất điểm số cao nhất trong khoảng thời gian này.")
+                .setView(layout)
+                .setPositiveButton("Bắt đầu tối ưu", (dialog, which) -> {
+                    String timeStr = input.getText().toString().trim();
+                    if (timeStr.isEmpty()) return;
+                    int freeTime = Integer.parseInt(timeStr);
+
+                    // GỌI THUẬT TOÁN ĐIỂM NHẤN
+                    List<StudyTask> result = TaskOptimizer.getOptimalTasks(pendingTasks, freeTime);
+
+                    if (result.isEmpty()) {
+                        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                                .setTitle("Kết quả tối ưu")
+                                .setMessage("Rất tiếc, thời gian của bạn quá ngắn, không đủ để hoàn thành trọn vẹn bất kỳ công việc nào trong danh sách.")
+                                .setPositiveButton("Đóng", null)
+                                .show();
+                    } else {
+                        StringBuilder sb = new StringBuilder("Để đạt hiệu quả cao nhất, hãy làm theo lộ trình sau:\n\n");
+                        int totalTime = 0;
+                        int totalScore = 0;
+                        for (StudyTask t : result) {
+                            sb.append("✅ ").append(t.getTaskName())
+                                    .append(" (").append(t.getEstimatedMinutes()).append(" phút)\n");
+                            totalTime += t.getEstimatedMinutes();
+                            totalScore += t.getPriority().equals("Cao") ? 3 : (t.getPriority().equals("Trung bình") ? 2 : 1);
+                        }
+                        sb.append("\n⏱ Tổng thời gian chiếm dụng: ").append(totalTime).append("/").append(freeTime).append(" phút");
+                        sb.append("\n⭐ Tổng điểm ưu tiên đạt được: ").append(totalScore);
+
+                        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                                .setTitle("Lộ trình tối ưu của bạn")
+                                .setMessage(sb.toString())
+                                .setPositiveButton("Tuyệt vời", null)
+                                .show();
+                    }
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
     }
 }

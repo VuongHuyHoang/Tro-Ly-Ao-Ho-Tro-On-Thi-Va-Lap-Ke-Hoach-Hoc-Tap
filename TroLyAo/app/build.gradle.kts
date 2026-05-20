@@ -54,6 +54,8 @@ dependencies {
     // Thư viện xử lý mạng và JSON
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.10.1")
+    //markdown cho AI chat
+    implementation("io.noties.markwon:core:4.6.2")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

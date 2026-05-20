@@ -1,11 +1,11 @@
 package ThiCK.vuonghuyhoang.androidapp;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -18,14 +18,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.QuerySnapshot;
-
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class HomeFragment extends Fragment {
@@ -33,6 +31,9 @@ public class HomeFragment extends Fragment {
     private RecyclerView recyclerTasks;
     private TaskAdapter taskAdapter;
     private List<StudyTask> firebaseTasks;
+
+    // Khai báo biến quản lý giao diện trống
+    private View layoutEmptyState;
 
     public HomeFragment() {
         // Yêu cầu một public constructor rỗng
@@ -46,19 +47,24 @@ public class HomeFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(super.getView(), savedInstanceState);
+        super.onViewCreated(view, savedInstanceState);
 
         MaterialButton btnAddDocument = view.findViewById(R.id.btn_add_document);
+        MaterialButton btnAddTaskManual = view.findViewById(R.id.btn_add_task_manual); // Ánh xạ nút thêm thủ công mới
         recyclerTasks = view.findViewById(R.id.recycler_tasks);
 
-        // 2. Xử lý sự kiện click nút Thêm tài liệu
-        btnAddDocument.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // ĐÃ SỬA: Chuyển hướng từ trang chủ sang màn hình tạo Quiz của AI
-                Intent intent = new Intent(getActivity(), AddDocumentActivity.class);
-                startActivity(intent);
-            }
+        // Ánh xạ vùng Empty State từ layout XML
+        layoutEmptyState = view.findViewById(R.id.layout_empty_state);
+
+        // Sự kiện thêm tài liệu AI
+        btnAddDocument.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), AddDocumentActivity.class);
+            startActivity(intent);
+        });
+
+        // TÍCH HỢP: Sự kiện gọi Bottom Sheet thêm Task thủ công
+        btnAddTaskManual.setOnClickListener(v -> {
+            showAddTaskBottomSheet();
         });
 
         firebaseTasks = new ArrayList<>();
@@ -67,7 +73,68 @@ public class HomeFragment extends Fragment {
         recyclerTasks.setAdapter(taskAdapter);
         recyclerTasks.setNestedScrollingEnabled(false);
 
-        // ĐỊNH NGHĨA BỘ ĐIỀU KHIỂN VUỐT CHUYÊN BIỆT THEO HƯỚNG
+        // Bộ công cụ cấu hình vuốt chạm (ItemTouchHelper)
+        configureSwipeActions();
+
+        // Lắng nghe dữ liệu thời gian thực và áp dụng thuật toán tối ưu hiển thị
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() != null) {
+            String currentUid = auth.getCurrentUser().getUid();
+
+            FirebaseFirestore.getInstance().collection("users")
+                    .document(currentUid)
+                    .collection("user_tasks")
+                    .addSnapshotListener((value, error) -> {
+                        if (error != null) return;
+
+                        if (value != null) {
+                            firebaseTasks.clear();
+                            for (DocumentSnapshot doc : value.getDocuments()) {
+                                StudyTask task = doc.toObject(StudyTask.class);
+                                if (task != null) firebaseTasks.add(task);
+                            }
+
+                            // LUỒNG KIỂM TRA EMPTY STATE
+                            if (firebaseTasks.isEmpty()) {
+                                layoutEmptyState.setVisibility(View.VISIBLE);
+                                recyclerTasks.setVisibility(View.GONE);
+                            } else {
+                                layoutEmptyState.setVisibility(View.GONE);
+                                recyclerTasks.setVisibility(View.VISIBLE);
+
+                                // THUẬT TOÁN SẮP XẾP TỰ ĐỘNG (SORTING LOGIC)
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                                    firebaseTasks.sort((t1, t2) -> {
+                                        // So sánh trạng thái hoàn thành trước
+                                        if (t1.isCompleted() != t2.isCompleted()) {
+                                            return t1.isCompleted() ? 1 : -1;
+                                        }
+                                        // Nếu cùng trạng thái hoàn thành, so sánh theo trọng số độ ưu tiên
+                                        return getPriorityWeight(t2.getPriority()) - getPriorityWeight(t1.getPriority());
+                                    });
+                                }
+                            }
+
+                            // Yêu cầu Adapter vẽ lại danh sách sau khi đã sắp xếp hoàn chỉnh
+                            taskAdapter.notifyDataSetChanged();
+                        }
+                    });
+        }
+    }
+
+    // Hàm phụ trợ tính toán trọng số độ ưu tiên phục vụ giải thuật sắp xếp
+    private int getPriorityWeight(String priority) {
+        if (priority == null) return 0;
+        switch (priority) {
+            case "Cao": return 3;
+            case "Trung bình": return 2;
+            case "Thấp": return 1;
+            default: return 0;
+        }
+    }
+
+    // Bộ xử lý vuốt chạm
+    private void configureSwipeActions() {
         ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
             @Override
             public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
@@ -80,70 +147,31 @@ public class HomeFragment extends Fragment {
                 StudyTask selectedTask = firebaseTasks.get(position);
 
                 if (direction == ItemTouchHelper.RIGHT) {
-                    // 1. VUỐT SANG PHẢI: HIỂN THỊ DIALOG XÁC NHẬN XÓA
                     new AlertDialog.Builder(requireContext())
                             .setTitle("Xác nhận xóa tác vụ")
                             .setMessage("Bạn có chắc chắn muốn xóa vĩnh viễn công việc \"" + selectedTask.getTaskName() + "\" không?")
-                            .setCancelable(false) // Không cho tắt dialog bằng cách bấm ra ngoài
-                            .setPositiveButton("Xóa", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    executeDeleteTask(selectedTask, position);
-                                }
-                            })
-                            .setNegativeButton("Hủy", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // Hoàn tác lại item trên giao diện RecyclerView nếu bấm Hủy
-                                    taskAdapter.notifyItemChanged(position);
-                                    dialog.dismiss();
-                                }
-                            })
-                            .show();
-
+                            .setCancelable(false)
+                            .setPositiveButton("Xóa", (dialog, which) -> executeDeleteTask(selectedTask, position))
+                            .setNegativeButton("Hủy", (dialog, which) -> {
+                                taskAdapter.notifyItemChanged(position);
+                                dialog.dismiss();
+                            }).show();
                 } else if (direction == ItemTouchHelper.LEFT) {
-                    // 2. VUỐT SANG TRÁI: HIỂN THỊ BOTTOM SHEET CHI TIẾT TÁC VỤ
                     showTaskDetailBottomSheet(selectedTask);
-                    // Sau khi mở Bottom Sheet, đưa item của RecyclerView về lại trạng thái bình thường
                     taskAdapter.notifyItemChanged(position);
                 }
             }
         };
-
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
-        itemTouchHelper.attachToRecyclerView(recyclerTasks);
-
-        // Luồng lắng nghe tự động đồng bộ (Giữ nguyên)
-        FirebaseAuth auth = FirebaseAuth.getInstance();
-        if (auth.getCurrentUser() != null) {
-            String currentUid = auth.getCurrentUser().getUid();
-            FirebaseFirestore.getInstance().collection("users")
-                    .document(currentUid)
-                    .collection("user_tasks")
-                    .addSnapshotListener((value, error) -> {
-                        if (error != null) return;
-                        if (value != null) {
-                            firebaseTasks.clear();
-                            for (DocumentSnapshot doc : value.getDocuments()) {
-                                StudyTask task = doc.toObject(StudyTask.class);
-                                if (task != null) firebaseTasks.add(task);
-                            }
-                            taskAdapter.notifyDataSetChanged();
-                        }
-                    });
-        }
+        new ItemTouchHelper(simpleCallback).attachToRecyclerView(recyclerTasks);
     }
 
-    // HÀM XỬ LÝ LỆNH XÓA DỮ LIỆU TRÊN FIRESTORE
     private void executeDeleteTask(StudyTask task, int position) {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {
             String currentUid = auth.getCurrentUser().getUid();
             FirebaseFirestore.getInstance()
-                    .collection("users")
-                    .document(currentUid)
-                    .collection("user_tasks")
-                    .document(String.valueOf(task.getId()))
+                    .collection("users").document(currentUid)
+                    .collection("user_tasks").document(String.valueOf(task.getId()))
                     .delete()
                     .addOnSuccessListener(aVoid -> Toast.makeText(requireContext(), "Đã xóa tác vụ thành công!", Toast.LENGTH_SHORT).show())
                     .addOnFailureListener(e -> {
@@ -153,11 +181,8 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    // HÀM HIỂN THỊ BOTTOM SHEET CHI TIẾT CÔNG VIỆC
     private void showTaskDetailBottomSheet(StudyTask task) {
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
-
-        // Nạp giao diện XML của Bottom Sheet (Chúng ta tận dụng layout sạch đẹp thiết kế nhanh)
         View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.layout_bottom_sheet_detail, null);
 
         TextView tvDetailTitle = sheetView.findViewById(R.id.tv_detail_title);
@@ -166,7 +191,6 @@ public class HomeFragment extends Fragment {
         Chip chipDetailPriority = sheetView.findViewById(R.id.chip_detail_priority);
         MaterialButton btnCloseSheet = sheetView.findViewById(R.id.btn_close_sheet);
 
-        // Đổ dữ liệu của Task được chọn vào giao diện Bottom Sheet
         tvDetailTitle.setText(task.getTaskName());
         tvDetailDeadline.setText("Hạn định hoàn thành: " + task.getDeadline());
         chipDetailPriority.setText("Độ ưu tiên: " + task.getPriority());
@@ -180,8 +204,65 @@ public class HomeFragment extends Fragment {
         }
 
         btnCloseSheet.setOnClickListener(v -> bottomSheetDialog.dismiss());
+        bottomSheetDialog.setContentView(sheetView);
+        bottomSheetDialog.show();
+    }
+
+    // TÍCH HỢP: Hàm hiển thị Bottom Sheet để thêm Task thủ công
+    private void showAddTaskBottomSheet() {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
+        View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.layout_bottom_sheet_add_task, null);
+
+        com.google.android.material.textfield.TextInputEditText edtName = sheetView.findViewById(R.id.edt_task_name);
+        com.google.android.material.textfield.TextInputEditText edtDeadline = sheetView.findViewById(R.id.edt_task_deadline);
+        android.widget.RadioGroup radioGroupPriority = sheetView.findViewById(R.id.radio_group_priority);
+        MaterialButton btnSave = sheetView.findViewById(R.id.btn_save_new_task);
+
+        btnSave.setOnClickListener(v -> {
+            String taskName = edtName.getText().toString().trim();
+            String deadline = edtDeadline.getText().toString().trim();
+
+            if (taskName.isEmpty() || deadline.isEmpty()) {
+                Toast.makeText(requireContext(), "Vui lòng nhập đầy đủ tên và hạn chót!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Lấy giá trị độ ưu tiên từ RadioButton
+            String priority = "Trung bình";
+            int checkedId = radioGroupPriority.getCheckedRadioButtonId();
+            if (checkedId == R.id.rb_high) {
+                priority = "Cao";
+            } else if (checkedId == R.id.rb_low) {
+                priority = "Thấp";
+            }
+
+            FirebaseAuth auth = FirebaseAuth.getInstance();
+            if (auth.getCurrentUser() != null) {
+                String currentUid = auth.getCurrentUser().getUid();
+
+                // Sinh ID duy nhất bằng timestamp
+                int newTaskId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
+
+                // ĐÃ SỬA CHỖ NÀY: Dùng Constructor đầy đủ tham số cho khớp với StudyTask của bạn
+                StudyTask newTask = new StudyTask(newTaskId, taskName, deadline, priority, false);
+
+                // Lưu lên Firestore
+                FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(currentUid)
+                        .collection("user_tasks")
+                        .document(String.valueOf(newTaskId))
+                        .set(newTask)
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(requireContext(), "Đã thêm công việc thành công!", Toast.LENGTH_SHORT).show();
+                            bottomSheetDialog.dismiss();
+                        })
+                        .addOnFailureListener(e -> Toast.makeText(requireContext(), "Lỗi khi lưu: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        });
 
         bottomSheetDialog.setContentView(sheetView);
         bottomSheetDialog.show();
     }
+
 }

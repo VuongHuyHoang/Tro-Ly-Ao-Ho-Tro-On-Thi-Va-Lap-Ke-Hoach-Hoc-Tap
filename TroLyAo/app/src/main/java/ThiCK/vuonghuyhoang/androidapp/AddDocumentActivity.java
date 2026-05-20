@@ -44,8 +44,8 @@ public class AddDocumentActivity extends AppCompatActivity {
                 // Cấu trúc System Prompt để ép Gemini trả về chuỗi định dạng JSON chuẩn xác
                 String systemInstruction = "\n\n[HƯỚNG DẪN HỆ THỐNG]: Bạn là một Giảng viên đại học chuyên nghiệp. Hãy đọc kỹ đoạn văn bản tài liệu do sinh viên cung cấp ở trên, trích xuất kiến thức cốt lõi và biên soạn đúng 3 câu hỏi trắc nghiệm khách quan để kiểm tra kiến thức bài học."
                         + " Bạn BẮT BUỘC phải trả về kết quả ở CUỐI bài viết của mình dưới dạng một chuỗi JSON chuẩn xác theo cấu trúc sau, không được sai một ký tự nào: "
-                        + "---QUIZ_START--- {\"quiz\": [{\"question\": \"Nội dung câu hỏi hỏi gì?\", \"options\": [\"Đáp án A\", \"Đáp án B\", \"Đáp án C\", \"Đáp án D\"], \"correctIndex\": 0}]} ---QUIZ_END---. "
-                        + "Trong đó, fields 'correctIndex' là số nguyên từ 0 đến 3 đại diện cho vị trí đáp án đúng trong mảng 'options' (0 ứng với đáp án đầu tiên). Hãy đặt nội dung các câu hỏi thật sát kiến thức.";
+                        + "---QUIZ_START--- {\"quiz\": [{\"question\": \"Nội dung câu hỏi hỏi gì?\", \"options\": [\"Đáp án A\", \"Đáp án B\", \"Đáp án C\", \"Đáp án D\"], \"correctIndex\": 0, \"explanation\": \"Lời giải thích ngắn gọn tại sao đáp án này đúng bằng tiếng Việt\"}]} ---QUIZ_END---. "
+                        + "Trong đó, fields 'correctIndex' là số nguyên từ 0 đến 3 đại diện cho vị trí đáp án đúng trong mảng 'options'. Hãy đặt nội dung các câu hỏi thật sát kiến thức.";
 
                 String finalPrompt = content + systemInstruction;
 

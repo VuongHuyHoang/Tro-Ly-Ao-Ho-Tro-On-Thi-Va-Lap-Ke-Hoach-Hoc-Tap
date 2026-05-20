@@ -52,6 +52,16 @@
             android:text="MSSV: -- | Lớp: --"
             android:textSize="14sp"
             android:textColor="@color/hintColor"/>
+
+        <TextView
+            android:id="@+id/tv_profile_highscore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Điểm trắc nghiệm cao nhất: 0/3"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/primaryColor"
+            android:layout_marginTop="4dp"/>
     </LinearLayout>
 
     <LinearLayout
@@ -127,6 +137,20 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_edit_profile"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="Chỉnh sửa thông tin hồ sơ"
+        android:textColor="@color/primaryColor"
+        app:backgroundTint="@color/surfaceColor"
+        app:strokeColor="@color/primaryColor"
+        app:strokeWidth="1dp"
+        app:cornerRadius="12dp"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="12dp"/>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_logout"

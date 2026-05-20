@@ -10,19 +10,25 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.QuerySnapshot;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ProfileFragment extends Fragment {
 
     private TextView tvCountDone, tvCountPending;
-    private TextView tvProfileName, tvProfileInfo, tvAvatarText;
-    private MaterialButton btnLogout;
+    private TextView tvProfileName, tvProfileInfo, tvAvatarText, tvHighScore;
+    private MaterialButton btnLogout, btnEditProfile;
+
+    // Các biến lưu thông tin hiện tại để truyền vào Bottom Sheet
+    private String currentName = "";
+    private String currentMssv = "";
+    private String currentClass = "";
 
     public ProfileFragment() {
         // Constructor rỗng
@@ -38,105 +44,165 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Ánh xạ các view thống kê và điều khiển
+        // Ánh xạ các view cũ
         tvCountDone = view.findViewById(R.id.tv_count_done);
         tvCountPending = view.findViewById(R.id.tv_count_pending);
         btnLogout = view.findViewById(R.id.btn_logout);
-
-        // Ánh xạ các view hiển thị thông tin sinh viên có dấu mới thêm
         tvProfileName = view.findViewById(R.id.tv_profile_name);
         tvProfileInfo = view.findViewById(R.id.tv_profile_info);
         tvAvatarText = view.findViewById(R.id.tv_avatar_text);
+        tvHighScore = view.findViewById(R.id.tv_profile_highscore);
 
-        // Xử lý sự kiện đăng xuất
-        btnLogout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Đăng xuất khỏi hệ thống Firebase đám mây
-                FirebaseAuth.getInstance().signOut();
+        // Ánh xạ nút sửa mới thêm
+        btnEditProfile = view.findViewById(R.id.btn_edit_profile);
 
-                // Trả người dùng về lại màn hình Login và xóa sạch các activity trước đó
-                Intent intent = new Intent(getActivity(), LoginActivity.class);
-                startActivity(intent);
-                if (getActivity() != null) {
-                    getActivity().finish();
-                }
-                Toast.makeText(requireContext(), "Đã đăng xuất thành công!", Toast.LENGTH_SHORT).show();
-            }
+        // 1. Sự kiện nút Chỉnh sửa hồ sơ
+        btnEditProfile.setOnClickListener(v -> showEditProfileBottomSheet());
+
+        // Sự kiện nút Đăng xuất (Giữ nguyên)
+        btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(getActivity(), LoginActivity.class);
+            startActivity(intent);
+            if (getActivity() != null) getActivity().finish();
+            Toast.makeText(requireContext(), "Đã đăng xuất thành công!", Toast.LENGTH_SHORT).show();
         });
 
-        // 1. Kiểm tra trạng thái xác thực và lấy UID cá nhân
+        // 2. Đọc thông tin và gán dữ liệu ban đầu từ Firestore
+        loadUserProfileData();
+
+        // 3. Đếm số lượng task realtime bằng SnapshotListener (Giữ nguyên đoạn cũ của bạn)
+        loadRealtimeTaskCounts();
+    }
+
+    private void loadUserProfileData() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {
             String currentUid = auth.getCurrentUser().getUid();
             FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-            // 2. ĐỌC THÔNG TIN TIẾNG VIỆT CÓ DẤU (Đọc 1 lần duy nhất bằng hàm get())
             db.collection("profiles")
                     .document(currentUid)
                     .get()
                     .addOnSuccessListener(documentSnapshot -> {
-                        // Kiểm tra an toàn xem Fragment còn hiển thị trên màn hình hay không
                         if (!isAdded() || getActivity() == null) return;
 
                         if (documentSnapshot.exists()) {
                             UserProfile userProfile = documentSnapshot.toObject(UserProfile.class);
                             if (userProfile != null) {
-                                // Gán họ tên có dấu lên giao diện
-                                tvProfileName.setText(userProfile.getFullName());
+                                // Lưu trữ lại vào biến toàn cục để phục vụ sửa đổi
+                                currentName = userProfile.getFullName();
+                                currentMssv = userProfile.getStudentId();
+                                currentClass = userProfile.getClassName();
 
-                                // Gán chuỗi MSSV và Lớp vào dòng mô tả phụ
-                                tvProfileInfo.setText("MSSV: " + userProfile.getStudentId() + " | Lớp: " + userProfile.getClassName());
+                                // Đổ lên giao diện TextViews
+                                updateProfileUi(currentName, currentMssv, currentClass);
+                            }
 
-                                // Thuật toán bóc tách từ cuối cùng để lấy chữ cái đầu làm ký tự Avatar (Ví dụ: "Huy Hoàng" -> lấy chữ "H")
-                                String fullName = userProfile.getFullName().trim();
-                                if (!fullName.isEmpty()) {
-                                    String[] nameParts = fullName.split("\\s+");
-                                    String lastName = nameParts[nameParts.length - 1];
-                                    if (!lastName.isEmpty()) {
-                                        tvAvatarText.setText(lastName.substring(0, 1).toUpperCase());
-                                    }
-                                }
+                            if (documentSnapshot.contains("highScore")) {
+                                long highScore = documentSnapshot.getLong("highScore");
+                                tvHighScore.setText("Điểm trắc nghiệm cao nhất: " + highScore + " / 3");
                             }
                         }
-                    })
-                    .addOnFailureListener(e -> {
-                        if (isAdded() && getContext() != null) {
-                            Toast.makeText(requireContext(), "Lỗi tải thông tin cá nhân: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
                     });
+        }
+    }
 
-            // 3. ĐẾM SỐ LƯỢNG TASK REALTIME (Lắng nghe liên tục bằng addSnapshotListener)
-            db.collection("users")
+    // Hàm cập nhật chữ và Avatar ký tự lên UI mảnh nhỏ
+    private void updateProfileUi(String name, String mssv, String className) {
+        tvProfileName.setText(name);
+        tvProfileInfo.setText("MSSV: " + mssv + " | Lớp: " + className);
+
+        String trimmedName = name.trim();
+        if (!trimmedName.isEmpty()) {
+            String[] nameParts = trimmedName.split("\\s+");
+            String lastName = nameParts[nameParts.length - 1];
+            if (!lastName.isEmpty()) {
+                tvAvatarText.setText(lastName.substring(0, 1).toUpperCase());
+            }
+        }
+    }
+
+    // HÀM HIỂN THỊ BOTTOM SHEET SỬA THÔNG TIN CÁ NHÂN
+    private void showEditProfileBottomSheet() {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
+        View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.layout_bottom_sheet_edit_profile, null);
+
+        TextInputEditText edtName = sheetView.findViewById(R.id.edt_edit_name);
+        TextInputEditText edtMssv = sheetView.findViewById(R.id.edt_edit_mssv);
+        TextInputEditText edtClass = sheetView.findViewById(R.id.edt_edit_class);
+        MaterialButton btnSave = sheetView.findViewById(R.id.btn_save_profile);
+
+        // Tự động điền dữ liệu cũ đang hiển thị vào ô nhập liệu
+        edtName.setText(currentName);
+        edtMssv.setText(currentMssv);
+        edtClass.setText(currentClass);
+
+        btnSave.setOnClickListener(v -> {
+            String newName = edtName.getText().toString().trim();
+            String newMssv = edtMssv.getText().toString().trim();
+            String newClass = edtClass.getText().toString().trim();
+
+            if (newName.isEmpty() || newMssv.isEmpty() || newClass.isEmpty()) {
+                Toast.makeText(requireContext(), "Không được để trống bất kỳ trường nào!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            FirebaseAuth auth = FirebaseAuth.getInstance();
+            if (auth.getCurrentUser() != null) {
+                String currentUid = auth.getCurrentUser().getUid();
+
+                // Tạo map đóng gói các trường cần chỉnh sửa cập nhật dập đè
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("fullName", newName);
+                updates.put("studentId", newMssv);
+                updates.put("className", newClass);
+
+                FirebaseFirestore.getInstance()
+                        .collection("profiles")
+                        .document(currentUid)
+                        .update(updates)
+                        .addOnSuccessListener(aVoid -> {
+                            // Cập nhật lại biến RAM hiện tại
+                            currentName = newName;
+                            currentMssv = newMssv;
+                            currentClass = newClass;
+
+                            // Cập nhật ngay lập tức lên màn hình TextView mà không cần tải lại app
+                            updateProfileUi(newName, newMssv, newClass);
+
+                            Toast.makeText(requireContext(), "Cập nhật hồ sơ thành công!", Toast.LENGTH_SHORT).show();
+                            bottomSheetDialog.dismiss();
+                        })
+                        .addOnFailureListener(e -> Toast.makeText(requireContext(), "Lỗi cập nhật: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        });
+
+        bottomSheetDialog.setContentView(sheetView);
+        bottomSheetDialog.show();
+    }
+
+    private void loadRealtimeTaskCounts() {
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() != null) {
+            String currentUid = auth.getCurrentUser().getUid();
+            FirebaseFirestore.getInstance().collection("users")
                     .document(currentUid)
                     .collection("user_tasks")
-                    .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                        @Override
-                        public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
-                            if (error != null || value == null) return;
-
-                            int doneCount = 0;
-                            int pendingCount = 0;
-
-                            for (DocumentSnapshot doc : value.getDocuments()) {
-                                StudyTask task = doc.toObject(StudyTask.class);
-                                if (task != null) {
-                                    if (task.isCompleted()) {
-                                        doneCount++;
-                                    } else {
-                                        pendingCount++;
-                                    }
-                                }
+                    .addSnapshotListener((value, error) -> {
+                        if (error != null || value == null) return;
+                        int doneCount = 0;
+                        int pendingCount = 0;
+                        for (DocumentSnapshot doc : value.getDocuments()) {
+                            StudyTask task = doc.toObject(StudyTask.class);
+                            if (task != null) {
+                                if (task.isCompleted()) doneCount++;
+                                else pendingCount++;
                             }
-
-                            // Cập nhật số lượng thống kê cá nhân lên màn hình
-                            tvCountDone.setText(String.valueOf(doneCount));
-                            tvCountPending.setText(String.valueOf(pendingCount));
                         }
+                        tvCountDone.setText(String.valueOf(doneCount));
+                        tvCountPending.setText(String.valueOf(pendingCount));
                     });
-        } else {
-            tvCountDone.setText("0");
-            tvCountPending.setText("0");
         }
     }
 }

@@ -55,7 +55,8 @@ public class ChatFragment extends Fragment {
         btnSend = view.findViewById(R.id.btn_send);
 
         messageList = new ArrayList<>();
-        chatAdapter = new ChatAdapter(messageList);
+        chatAdapter = new ChatAdapter(messageList, requireContext());
+        recyclerChat.setAdapter(chatAdapter);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(requireContext());
         layoutManager.setStackFromEnd(true);

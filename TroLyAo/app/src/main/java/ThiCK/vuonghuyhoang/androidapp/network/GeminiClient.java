@@ -1,6 +1,5 @@
 package ThiCK.vuonghuyhoang.androidapp.network;
 
-import com.google.gson.internal.GsonBuildConfig;
 
 import okhttp3.Call;
 import okhttp3.Callback;

@@ -41,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
                     .commit();
         }
 
+        bottomNav.setSelectedItemId(R.id.nav_home);
+
         // 3. Xử lý sự kiện khi người dùng bấm vào thanh điều hướng
         bottomNav.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
             @Override
@@ -55,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
                 } else if (itemId == R.id.nav_profile) {
                     // Đã cập nhật kết nối đến ProfileFragment thật thay vì HomeFragment tạm thời
                     selectedFragment = new ProfileFragment();
+                } else if(itemId ==R.id.nav_calendar){
+                    selectedFragment = new CalendarFragment();
                 }
 
                 if (selectedFragment != null) {

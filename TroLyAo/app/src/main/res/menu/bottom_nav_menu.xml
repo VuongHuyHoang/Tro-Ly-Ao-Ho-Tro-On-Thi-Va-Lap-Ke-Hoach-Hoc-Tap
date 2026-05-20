@@ -2,6 +2,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/nav_calendar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:icon="@android:drawable/ic_menu_my_calendar"
+        android:title="Lịch trình" />
+
+    <item
         android:id="@+id/nav_home"
         android:icon="@android:drawable/ic_menu_today"
         android:title="Trang chủ" />

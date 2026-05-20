@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="90dp"
+    android:orientation="vertical"
+    android:background="@drawable/calendar_cell_border" android:padding="4dp">
+
+    <TextView
+        android:id="@+id/tv_cell_day"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
+        android:gravity="center"
+        android:text="1"
+        android:textColor="#1A1C1E"
+        android:textSize="12sp"
+        android:textStyle="bold"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="bottom"
+        android:layout_marginTop="2dp">
+
+        <TextView
+            android:id="@+id/tv_mini_task1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="3dp"
+            android:text="Task 1"
+            android:textSize="9sp"
+            android:visibility="gone"
+            android:layout_marginBottom="1dp"/>
+
+        <TextView
+            android:id="@+id/tv_mini_task2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="3dp"
+            android:text="Task 2"
+            android:textSize="9sp"
+            android:visibility="gone"
+            android:layout_marginBottom="2dp"/>
+    </LinearLayout>
+</LinearLayout>

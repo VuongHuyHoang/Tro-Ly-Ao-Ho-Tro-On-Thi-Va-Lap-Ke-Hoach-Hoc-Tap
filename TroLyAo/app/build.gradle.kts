@@ -56,6 +56,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     //markdown cho AI chat
     implementation("io.noties.markwon:core:4.6.2")
+    //hỗ trợ lịch có màu sắc
+    implementation("com.applandeo:material-calendar-view:1.9.0-rc03")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

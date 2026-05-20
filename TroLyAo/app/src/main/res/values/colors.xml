@@ -11,4 +11,11 @@
 
     <color name="textColor">#212121</color>
     <color name="hintColor">#757575</color>
-    <color name="borderColor">#E0E0E0</color> </resources>
+    <color name="borderColor">#E0E0E0</color>
+
+    <color name="pastel_high">#FFCDD2</color>
+    <color name="pastel_medium">#FFE0B2</color>
+    <color name="pastel_low">#C8E6C9</color>
+    <color name="pastel_done">#E0E0E0</color>
+
+</resources>

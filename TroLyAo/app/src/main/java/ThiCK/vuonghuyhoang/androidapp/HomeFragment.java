@@ -146,16 +146,24 @@ public class HomeFragment extends Fragment {
                 int position = viewHolder.getAdapterPosition();
                 StudyTask selectedTask = firebaseTasks.get(position);
 
+                // Khi vuốt sang PHẢI: Hiển thị hộp thoại xác nhận xóa chuẩn Material giống bên Lịch
                 if (direction == ItemTouchHelper.RIGHT) {
-                    new AlertDialog.Builder(requireContext())
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Xác nhận xóa tác vụ")
-                            .setMessage("Bạn có chắc chắn muốn xóa vĩnh viễn công việc \"" + selectedTask.getTaskName() + "\" không?")
-                            .setCancelable(false)
-                            .setPositiveButton("Xóa", (dialog, which) -> executeDeleteTask(selectedTask, position))
+                            .setMessage("Bạn có chắc chắn muốn xóa vĩnh viễn công việc \"" + selectedTask.getTaskName() + "\" không? Thao tác này không thể hoàn tác.")
+                            .setCancelable(false) // Buộc người dùng phải chọn nút, không cho bấm ra ngoài màn hình để tắt
+                            .setPositiveButton("Xóa", (dialog, which) -> {
+                                // Gọi hàm thực thi xóa Firebase gốc của bạn
+                                executeDeleteTask(selectedTask, position);
+                            })
                             .setNegativeButton("Hủy", (dialog, which) -> {
+                                // Hoàn tác hoạt ảnh trượt, đưa thanh công việc về vị trí cũ
                                 taskAdapter.notifyItemChanged(position);
                                 dialog.dismiss();
-                            }).show();
+                            })
+                            .show();
+
+                    // Khi vuốt sang TRÁI: Mở khung xem chi tiết (Giữ nguyên logic cũ)
                 } else if (direction == ItemTouchHelper.LEFT) {
                     showTaskDetailBottomSheet(selectedTask);
                     taskAdapter.notifyItemChanged(position);

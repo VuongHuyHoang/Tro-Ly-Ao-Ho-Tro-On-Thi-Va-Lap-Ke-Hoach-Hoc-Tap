@@ -60,6 +60,9 @@ public class MainActivity extends AppCompatActivity {
                 } else if(itemId ==R.id.nav_calendar){
                     selectedFragment = new CalendarFragment();
                 }
+                else if (itemId == R.id.nav_diary) {
+                    selectedFragment = new DiaryFragment();
+                }
 
                 if (selectedFragment != null) {
                     getSupportFragmentManager().beginTransaction()

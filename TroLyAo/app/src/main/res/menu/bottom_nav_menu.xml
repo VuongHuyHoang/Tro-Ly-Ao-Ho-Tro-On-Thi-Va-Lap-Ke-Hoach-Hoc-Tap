@@ -19,6 +19,11 @@
         android:title="AI Chat" />
 
     <item
+        android:id="@+id/nav_diary"
+        android:icon="@drawable/ic_diary"
+        android:title="Nhật ký" />
+
+    <item
         android:id="@+id/nav_profile"
         android:icon="@android:drawable/ic_menu_manage"
         android:title="Cá nhân" />

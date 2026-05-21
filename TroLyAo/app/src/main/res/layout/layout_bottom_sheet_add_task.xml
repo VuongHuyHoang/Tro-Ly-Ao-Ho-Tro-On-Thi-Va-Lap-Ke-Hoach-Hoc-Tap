@@ -37,16 +37,34 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-        app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp">
+        android:layout_marginBottom="12dp"
+        android:hint="Thuộc dự án/mục nào?">
+
+        <AutoCompleteTextView
+            android:id="@+id/edt_task_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textCapSentences" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/layout_task_deadline"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:hint="Hạn chót (VD: 25/12/2026)"
+        app:endIconDrawable="@android:drawable/ic_menu_my_calendar"
+        app:endIconMode="custom">
+
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/edt_task_deadline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Hạn chót (VD: 25/12/2026)"/>
+            android:inputType="date" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout

@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,183 +16,169 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.List;
 
-public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder> {
+public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private List<StudyTask> taskList;
+    private List<TaskWrapper> visibleList;
+    private OnHeaderClickListener headerClickListener;
 
-    public TaskAdapter(List<StudyTask> taskList) {
-        this.taskList = taskList;
+    // Interface để báo cho Fragment biết khi người dùng bấm mở/đóng danh mục
+    public interface OnHeaderClickListener {
+        void onHeaderClick(String categoryName, boolean isCurrentlyExpanded);
+        void onHeaderLongClick(String categoryName);
     }
 
+    public TaskAdapter(List<TaskWrapper> visibleList, OnHeaderClickListener headerClickListener) {
+        this.visibleList = visibleList;
+        this.headerClickListener = headerClickListener;
+    }
+
+    // 1. QUYẾT ĐỊNH LOẠI VIEW CHO TỪNG DÒNG
+    @Override
+    public int getItemViewType(int position) {
+        return visibleList.get(position).type;
+    }
+
+    // 2. TẠO GIAO DIỆN TƯƠNG ỨNG VỚI VIEW TYPE
     @NonNull
     @Override
-    public TaskViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_task, parent, false);
-        return new TaskViewHolder(view);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if (viewType == TaskWrapper.TYPE_HEADER) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_category_header, parent, false);
+            return new HeaderViewHolder(view);
+        } else {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_task, parent, false);
+            return new TaskViewHolder(view);
+        }
     }
 
+    // 3. ĐỔ DỮ LIỆU VÀO GIAO DIỆN
     @Override
-    public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
-        StudyTask task = taskList.get(position);
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        TaskWrapper item = visibleList.get(position);
 
-        holder.tvTaskName.setText(task.getTaskName());
-        holder.tvDeadline.setText("Hạn chót: " + task.getDeadline());
+        if (holder.getItemViewType() == TaskWrapper.TYPE_HEADER) {
+            // XỬ LÝ THANH TIÊU ĐỀ
+            HeaderViewHolder headerHolder = (HeaderViewHolder) holder;
+            headerHolder.tvCategoryName.setText(item.headerTitle);
 
-        // TẮT bộ lắng nghe cũ trước khi gán trạng thái để tránh lỗi lặp CheckBox khi cuộn
-        holder.checkBox.setOnCheckedChangeListener(null);
-        holder.checkBox.setChecked(task.isCompleted());
+            // Xoay mũi tên lên/xuống tùy trạng thái mở rộng
+            headerHolder.imgArrow.setRotation(item.isExpanded ? 180f : 0f);
 
-        // --- CẬP NHẬT GÁN TEXT HẠN CHÓT ---
-        String timeStr = (task.getDueTime() != null && !task.getDueTime().isEmpty()) ? task.getDueTime() : "23:59";
-        holder.tvDeadline.setText(timeStr + " - " + task.getDeadline());
-
-        // THỰC HIỆN: NHUỘM MÀU "DEADLINE DÍ" ---
-        try {
-            // Lấy thời gian hiện tại của hệ thống
-            java.util.Calendar currentCal = java.util.Calendar.getInstance();
-
-            // Tạo đối tượng Calendar đại diện cho thời gian Deadline của Task
-            java.util.Calendar taskCal = java.util.Calendar.getInstance();
-
-            // Định dạng để phân tích chuỗi Ngày và Giờ
-            // Lưu ý: Định dạng phải khớp chính xác với cách bạn lưu (dd/MM/yyyy HH:mm)
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault());
-
-            // Ghép Ngày và Giờ lại để parse
-            String combinedDateTimeStr = task.getDeadline() + " " + timeStr;
-            taskCal.setTime(sdf.parse(combinedDateTimeStr));
-
-            // Tính toán khoảng cách thời gian (tính bằng mili-giây)
-            long diffInMillis = taskCal.getTimeInMillis() - currentCal.getTimeInMillis();
-
-            // Định nghĩa ngưỡng 2 tiếng (2 * 60 phút * 60 giây * 1000 mili-giây)
-            long twoHoursInMillis = 2 * 60 * 60 * 1000;
-
-            // KIỂM TRA ĐIỀU KIỆN
-            if (diffInMillis < 0) {
-                // Trường hợp 1: Đã quá hạn rồi! -> Nhuộm màu Đỏ đậm sắc nét
-                holder.tvDeadline.setTextColor(android.graphics.Color.parseColor("#C62828"));
-                holder.tvDeadline.setText("⚠️ ĐÃ QUÁ HẠN: " + timeStr + " - " + task.getDeadline());
-
-            } else if (diffInMillis <= twoHoursInMillis) {
-                // Trường hợp 2: Deadline dí! (Trong vòng 2 tiếng tới) -> Nhuộm màu Cam đỏ khẩn cấp
-                holder.tvDeadline.setTextColor(android.graphics.Color.parseColor("#F4511E"));
-                // Bạn có thể thêm icon đồng hồ cát nhỏ nếu muốn
-
-            } else {
-                // Trường hợp 3: Còn dư dả thời gian -> Trả về màu xám nhạt cơ bản
-                holder.tvDeadline.setTextColor(android.graphics.Color.parseColor("#757575"));
-            }
-
-        } catch (Exception e) {
-            // Nếu parse bị lỗi (do dữ liệu ngày tháng sai định dạng), giữ nguyên màu xám
-            holder.tvDeadline.setTextColor(android.graphics.Color.parseColor("#757575"));
-            e.printStackTrace();
-        }
-
-        // Đọc mã màu Pastel trực tiếp từ resources để đảm bảo hiển thị đồng bộ
-        int colorHigh = holder.itemView.getContext().getResources().getColor(R.color.pastel_high);
-        int colorMedium = holder.itemView.getContext().getResources().getColor(R.color.pastel_medium);
-        int colorLow = holder.itemView.getContext().getResources().getColor(R.color.pastel_low);
-        int colorDone = holder.itemView.getContext().getResources().getColor(R.color.pastel_done);
-
-        // THUẬT TOÁN NHUỘM MÀN HÌNH THEO MÀU PASTEL (GIỐNG ẢNH MẪU)
-        if (task.isCompleted()) {
-            // Khi đã hoàn thành: Chuyển Card sang màu Xám nhạt, ẩn chip, gạch ngang chữ
-            holder.cardTaskBg.setCardBackgroundColor(colorDone);
-            holder.chipPriority.setVisibility(View.GONE);
-            holder.tvTaskName.setPaintFlags(holder.tvTaskName.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-            holder.tvTaskName.setTextColor(Color.parseColor("#757575")); // Chữ xám mờ đi
-        } else {
-            // Khi chưa hoàn thành: Bỏ gạch ngang chữ, khôi phục màu đen đậm
-            holder.tvTaskName.setPaintFlags(holder.tvTaskName.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
-            holder.tvTaskName.setTextColor(holder.itemView.getContext().getResources().getColor(R.color.textColorPrimary));
-
-            // Ẩn chip ưu tiên vì bản thân chiếc Card đã mang màu sắc đại diện cho độ ưu tiên đó
-            holder.chipPriority.setVisibility(View.GONE);
-
-            if (task.getPriority() != null) {
-                switch (task.getPriority()) {
-                    case "Cao":
-                        holder.cardTaskBg.setCardBackgroundColor(colorHigh);
-                        break;
-                    case "Thấp":
-                        holder.cardTaskBg.setCardBackgroundColor(colorLow);
-                        break;
-                    default: // Trung bình
-                        holder.cardTaskBg.setCardBackgroundColor(colorMedium);
-                        break;
+            // Bắt sự kiện bấm vào thanh tiêu đề
+            headerHolder.itemView.setOnClickListener(v -> {
+                if (headerClickListener != null) {
+                    headerClickListener.onHeaderClick(item.headerTitle, item.isExpanded);
                 }
+            });
+
+            headerHolder.itemView.setOnLongClickListener(v -> {
+                if (headerClickListener != null) {
+                    headerClickListener.onHeaderLongClick(item.headerTitle);
+                }
+                return true; // Trả về true để hệ thống biết sự kiện đã được xử lý, không kích hoạt click thường
+            });
+
+        } else {
+            // XỬ LÝ THẺ CÔNG VIỆC (Đoạn code cũ của bạn đưa vào đây)
+            TaskViewHolder taskHolder = (TaskViewHolder) holder;
+            StudyTask task = item.task;
+
+            taskHolder.tvTaskName.setText(task.getTaskName());
+            taskHolder.checkBox.setOnCheckedChangeListener(null);
+            taskHolder.checkBox.setChecked(task.isCompleted());
+
+            // Logic thời gian và cảnh báo động
+            String timeStr = (task.getDueTime() != null && !task.getDueTime().isEmpty()) ? task.getDueTime() : "23:59";
+            String baseDeadlineText = timeStr + " - " + task.getDeadline();
+
+            if (task.isCompleted()) {
+                taskHolder.tvDeadline.setText(baseDeadlineText);
+                taskHolder.tvDeadline.setTextColor(Color.parseColor("#757575"));
             } else {
-                holder.cardTaskBg.setCardBackgroundColor(colorMedium);
+                try {
+                    java.util.Calendar currentCal = java.util.Calendar.getInstance();
+                    java.util.Calendar taskCal = java.util.Calendar.getInstance();
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault());
+                    taskCal.setTime(sdf.parse(task.getDeadline() + " " + timeStr));
+
+                    long diffInMillis = taskCal.getTimeInMillis() - currentCal.getTimeInMillis();
+                    long estimatedInMillis = task.getEstimatedMinutes() * 60 * 1000L;
+
+                    if (diffInMillis < 0) {
+                        taskHolder.tvDeadline.setTextColor(Color.parseColor("#C62828"));
+                        taskHolder.tvDeadline.setText("⚠️ ĐÃ QUÁ HẠN: " + baseDeadlineText);
+                    } else if (diffInMillis < estimatedInMillis) {
+                        taskHolder.tvDeadline.setTextColor(Color.parseColor("#F4511E"));
+                        taskHolder.tvDeadline.setText("⏳ SẮP HẾT GIỜ: " + baseDeadlineText);
+                    } else {
+                        taskHolder.tvDeadline.setTextColor(Color.parseColor("#757575"));
+                        taskHolder.tvDeadline.setText(baseDeadlineText);
+                    }
+                } catch (Exception e) {
+                    taskHolder.tvDeadline.setTextColor(Color.parseColor("#757575"));
+                    taskHolder.tvDeadline.setText(baseDeadlineText);
+                }
             }
+
+            // Logic nhuộm màu Pastel
+            int colorHigh = taskHolder.itemView.getContext().getResources().getColor(R.color.pastel_high);
+            int colorMedium = taskHolder.itemView.getContext().getResources().getColor(R.color.pastel_medium);
+            int colorLow = taskHolder.itemView.getContext().getResources().getColor(R.color.pastel_low);
+            int colorDone = taskHolder.itemView.getContext().getResources().getColor(R.color.pastel_done);
+
+            if (task.isCompleted()) {
+                taskHolder.cardTaskBg.setCardBackgroundColor(colorDone);
+                taskHolder.chipPriority.setVisibility(View.GONE);
+                taskHolder.tvTaskName.setPaintFlags(taskHolder.tvTaskName.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                taskHolder.tvTaskName.setTextColor(Color.parseColor("#757575"));
+            } else {
+                taskHolder.tvTaskName.setPaintFlags(taskHolder.tvTaskName.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+                taskHolder.tvTaskName.setTextColor(taskHolder.itemView.getContext().getResources().getColor(R.color.textColorPrimary));
+                taskHolder.chipPriority.setVisibility(View.GONE);
+
+                String prio = task.getPriority() != null ? task.getPriority() : "Trung bình";
+                switch (prio) {
+                    case "Cao": taskHolder.cardTaskBg.setCardBackgroundColor(colorHigh); break;
+                    case "Thấp": taskHolder.cardTaskBg.setCardBackgroundColor(colorLow); break;
+                    default: taskHolder.cardTaskBg.setCardBackgroundColor(colorMedium); break;
+                }
+            }
+
+            // Xử lý sự kiện CheckBox lưu Firebase
+            taskHolder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                task.setCompleted(isChecked);
+                FirebaseAuth auth = FirebaseAuth.getInstance();
+                if (auth.getCurrentUser() != null) {
+                    FirebaseFirestore.getInstance()
+                            .collection("users").document(auth.getCurrentUser().getUid())
+                            .collection("user_tasks").document(String.valueOf(task.getId()))
+                            .update("completed", isChecked);
+                    // Dùng notifyDataSetChanged thay cho notifyItemChanged để an toàn hơn với Accordion
+                    notifyDataSetChanged();
+                }
+            });
         }
-
-        // ĐOẠN CODE ĐÃ ĐƯỢC SỬA SẠCH LỖI CÚ PHÁP ĐÓNG NGOẶC TRONG TASKADAPTER.JAVA
-        holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            task.setCompleted(isChecked); // Cập nhật RAM tức thì để đổi màu Pastel
-
-            FirebaseAuth auth = FirebaseAuth.getInstance();
-            if (auth.getCurrentUser() != null) {
-                String currentUid = auth.getCurrentUser().getUid();
-                String documentId = String.valueOf(task.getId());
-
-                // LỚP 1: Thử cập nhật trực tiếp bằng ID dạng số (int)
-                FirebaseFirestore.getInstance()
-                        .collection("users")
-                        .document(currentUid)
-                        .collection("user_tasks")
-                        .document(documentId)
-                        .update("completed", isChecked)
-                        .addOnSuccessListener(aVoid -> {
-                            // Cập nhật thành công lớp 1 -> Làm mới màu dòng này
-                            notifyItemChanged(position);
-                        })
-                        .addOnFailureListener(e -> {
-                            // LỚP 2 (PHÒNG THỦ): Nếu lớp 1 lỗi do lệch ID, tìm Document ID thực tế bằng trường taskName
-                            FirebaseFirestore.getInstance()
-                                    .collection("users")
-                                    .document(currentUid)
-                                    .collection("user_tasks")
-                                    .whereEqualTo("taskName", task.getTaskName())
-                                    .get()
-                                    .addOnSuccessListener(queryDocumentSnapshots -> {
-                                        if (!queryDocumentSnapshots.isEmpty()) {
-                                            // Lấy được mã chuỗi ID thực tế trên Cloud Firestore
-                                            String realDocId = queryDocumentSnapshots.getDocuments().get(0).getId();
-
-                                            // Tiến hành cập nhật chuẩn xác vào đúng Document
-                                            FirebaseFirestore.getInstance()
-                                                    .collection("users")
-                                                    .document(currentUid)
-                                                    .collection("user_tasks")
-                                                    .document(realDocId)
-                                                    .update("completed", isChecked)
-                                                    .addOnSuccessListener(aVoid2 -> {
-                                                        notifyItemChanged(position);
-                                                    });
-                                        }
-                                    })
-                                    .addOnFailureListener(err -> {
-                                        // Hoàn tác (Rollback) giao diện nếu lỗi mạng thực sự xảy ra
-                                        task.setCompleted(!isChecked);
-                                        holder.checkBox.setOnCheckedChangeListener(null);
-                                        holder.checkBox.setChecked(!isChecked);
-                                        notifyItemChanged(position);
-                                    });
-                        });
-            }
-        });
     }
 
     @Override
     public int getItemCount() {
-        return taskList != null ? taskList.size() : 0;
+        return visibleList != null ? visibleList.size() : 0;
+    }
+
+    // 4. KHAI BÁO 2 LOẠI VIEWHOLDER
+    public static class HeaderViewHolder extends RecyclerView.ViewHolder {
+        TextView tvCategoryName;
+        ImageView imgArrow;
+
+        public HeaderViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvCategoryName = itemView.findViewById(R.id.tv_category_name);
+            imgArrow = itemView.findViewById(R.id.img_expand_arrow); // Đảm bảo ID này khớp với file item_category_header.xml
+        }
     }
 
     public static class TaskViewHolder extends RecyclerView.ViewHolder {
-        MaterialCardView cardTaskBg; // Khai báo CardView bao ngoài để đổi màu nền
+        MaterialCardView cardTaskBg;
         TextView tvTaskName;
         TextView tvDeadline;
         Chip chipPriority;
@@ -199,7 +186,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
 
         public TaskViewHolder(@NonNull View itemView) {
             super(itemView);
-            cardTaskBg = itemView.findViewById(R.id.card_task_bg); // Ánh xạ id đã thêm ở item_task.xml
+            cardTaskBg = itemView.findViewById(R.id.card_task_bg);
             tvTaskName = itemView.findViewById(R.id.tv_task_name);
             tvDeadline = itemView.findViewById(R.id.tv_deadline);
             chipPriority = itemView.findViewById(R.id.chip_priority);

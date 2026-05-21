@@ -1,30 +1,34 @@
 package ThiCK.vuonghuyhoang.androidapp;
 
 public class StudyTask {
+    private String category;
     private int id;
     private String taskName;
     private String deadline;
     private String priority;
-    private String dueTime;  // MỚI: Giờ hạn chót (VD: 23:59)
-    private int estimatedMinutes; // MỚI: Thời lượng làm việc dự kiến (VD: 120)
+    private String dueTime;
+    private int orderIndex;
+    private int estimatedMinutes;
     private boolean isCompleted;
 
     public StudyTask() {
     }
 
-    // Cập nhật Constructor
-    public StudyTask(int id, String taskName, String deadline, String dueTime, int estimatedMinutes, String priority, boolean isCompleted) {
+    public StudyTask(String category, int id, String taskName, String deadline, String priority, String dueTime, int estimatedMinutes, boolean isCompleted) {
+        this.category = category;
         this.id = id;
         this.taskName = taskName;
         this.deadline = deadline;
+        this.priority = priority;
         this.dueTime = dueTime;
         this.estimatedMinutes = estimatedMinutes;
-        this.priority = priority;
         this.isCompleted = isCompleted;
     }
 
-    // Getters
-    // Thêm Getters và Setters cho 2 trường mới
+    public int getOrderIndex() { return orderIndex; }
+    public void setOrderIndex(int orderIndex) { this.orderIndex = orderIndex; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public String getDueTime() { return dueTime; }
     public void setDueTime(String dueTime) { this.dueTime = dueTime; }
     public int getEstimatedMinutes() { return estimatedMinutes; }

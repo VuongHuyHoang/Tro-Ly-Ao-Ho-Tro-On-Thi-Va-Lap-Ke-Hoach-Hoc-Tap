@@ -40,6 +40,7 @@ public class CalendarFragment extends Fragment {
 
     private List<StudyTask> allTasksList = new ArrayList<>();
     private List<StudyTask> displayTasksList = new ArrayList<>();
+    private List<TaskWrapper> agendaWrappers = new ArrayList<>();
     private List<Calendar> daysInGridList = new ArrayList<>();
 
     private Calendar currentMonthCalendar = Calendar.getInstance();
@@ -94,7 +95,18 @@ public class CalendarFragment extends Fragment {
             }
         });
 
-        agendaAdapter = new TaskAdapter(displayTasksList);
+        // --- THAY THẾ ĐOẠN LỖI BẰNG ĐOẠN CODE NÀY ---
+        agendaAdapter = new TaskAdapter(agendaWrappers, new TaskAdapter.OnHeaderClickListener() {
+            @Override
+            public void onHeaderClick(String categoryName, boolean isCurrentlyExpanded) {
+                // Không làm gì cả (Bên lịch hiển thị phẳng, không có Accordion)
+            }
+
+            @Override
+            public void onHeaderLongClick(String categoryName) {
+                // Không làm gì cả (Bên lịch không hỗ trợ nhấn giữ để xóa cụm)
+            }
+        });
         recyclerCalendarTasks.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerCalendarTasks.setAdapter(agendaAdapter);
 
@@ -275,6 +287,10 @@ public class CalendarFragment extends Fragment {
             }
         });
 
+        agendaWrappers.clear();
+        for (StudyTask task : displayTasksList) {
+            agendaWrappers.add(new TaskWrapper(task)); // Bọc task lại thành wrapper
+        }
         agendaAdapter.notifyDataSetChanged();
         checkEmptyState();
     }

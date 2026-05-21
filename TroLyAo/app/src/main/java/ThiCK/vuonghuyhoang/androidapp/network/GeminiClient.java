@@ -27,8 +27,9 @@ public class GeminiClient {
     public GeminiClient() {
         // Cấu hình thời gian chờ mạng tối đa là 30 giây
         client = new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
                 .build();
     }
 

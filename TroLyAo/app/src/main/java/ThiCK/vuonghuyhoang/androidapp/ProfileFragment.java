@@ -1,6 +1,7 @@
 package ThiCK.vuonghuyhoang.androidapp;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,13 +11,21 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ProfileFragment extends Fragment {
@@ -28,6 +37,7 @@ public class ProfileFragment extends Fragment {
     // Các biến lưu thông tin hiện tại để truyền vào Bottom Sheet
     private String currentName = "";
     private String currentMssv = "";
+    private PieChart pieChart;
     private String currentClass = "";
 
     public ProfileFragment() {
@@ -52,6 +62,7 @@ public class ProfileFragment extends Fragment {
         tvProfileInfo = view.findViewById(R.id.tv_profile_info);
         tvAvatarText = view.findViewById(R.id.tv_avatar_text);
         tvHighScore = view.findViewById(R.id.tv_profile_highscore);
+        pieChart = view.findViewById(R.id.pieChart);
 
         // Ánh xạ nút sửa mới thêm
         btnEditProfile = view.findViewById(R.id.btn_edit_profile);
@@ -202,7 +213,38 @@ public class ProfileFragment extends Fragment {
                         }
                         tvCountDone.setText(String.valueOf(doneCount));
                         tvCountPending.setText(String.valueOf(pendingCount));
+
+                        setupPieChart(doneCount, pendingCount);
                     });
         }
+    }
+    private void setupPieChart(int completed, int pending) {
+        List<PieEntry> entries = new ArrayList<>();
+        entries.add(new PieEntry(completed, "Hoàn thành"));
+        entries.add(new PieEntry(pending, "Đang xử lý"));
+
+        PieDataSet dataSet = new PieDataSet(entries, "");
+
+        // Thiết lập màu sắc (Xanh lá cho hoàn thành, Đỏ cam cho đang xử lý)
+        int[] colors = {Color.parseColor("#4CAF50"), Color.parseColor("#FF5722")};
+        dataSet.setColors(colors);
+        dataSet.setValueTextSize(18f);
+        dataSet.setValueTextColor(Color.WHITE);
+
+        PieData data = new PieData(dataSet);
+        pieChart.setData(data);
+
+        // Cấu hình thẩm mỹ
+        com.github.mikephil.charting.components.Legend legend = pieChart.getLegend();
+        legend.setTextSize(12f); // Tăng kích thước chữ chú thích
+        legend.setFormSize(12f); // Tăng kích thước ô vuông màu bên cạnh chữ chú thích
+        legend.setXEntrySpace(25f);       // Tăng khoảng cách ngang giữa mục "Hoàn thành" và "Đang xử lý"
+        legend.setFormToTextSpace(10f);
+        pieChart.setUsePercentValues(true);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setHoleRadius(40f); // Tạo lỗ ở giữa (biểu đồ vòng)
+        pieChart.setTransparentCircleRadius(45f);
+        pieChart.animateY(1000); // Hiệu ứng xoay khi hiện ra
+        pieChart.invalidate(); // Vẽ lại
     }
 }

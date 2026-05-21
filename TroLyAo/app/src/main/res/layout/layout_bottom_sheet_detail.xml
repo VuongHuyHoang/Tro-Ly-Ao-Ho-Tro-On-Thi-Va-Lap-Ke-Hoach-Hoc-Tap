@@ -53,6 +53,15 @@
         android:layout_marginBottom="8dp"/>
 
     <TextView
+        android:id="@+id/tv_detail_estimated_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Thời lượng dự kiến: 60 phút"
+        android:textColor="#44474E"
+        android:textSize="14sp" />
+
+    <TextView
         android:id="@+id/tv_detail_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

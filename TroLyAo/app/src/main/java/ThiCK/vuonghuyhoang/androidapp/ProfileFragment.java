@@ -31,13 +31,14 @@ import java.util.Map;
 public class ProfileFragment extends Fragment {
 
     private TextView tvCountDone, tvCountPending;
-    private TextView tvProfileName, tvProfileInfo, tvAvatarText, tvHighScore;
+    private TextView tvProfileName, tvProfileInfo, tvAvatarText;
     private MaterialButton btnLogout, btnEditProfile;
 
     // Các biến lưu thông tin hiện tại để truyền vào Bottom Sheet
     private String currentName = "";
     private String currentMssv = "";
     private PieChart pieChart;
+    private com.google.android.material.button.MaterialButton btnQuizHistory;
     private String currentClass = "";
 
     public ProfileFragment() {
@@ -61,11 +62,16 @@ public class ProfileFragment extends Fragment {
         tvProfileName = view.findViewById(R.id.tv_profile_name);
         tvProfileInfo = view.findViewById(R.id.tv_profile_info);
         tvAvatarText = view.findViewById(R.id.tv_avatar_text);
-        tvHighScore = view.findViewById(R.id.tv_profile_highscore);
+        btnQuizHistory = view.findViewById(R.id.btn_quiz_history);
         pieChart = view.findViewById(R.id.pieChart);
 
         // Ánh xạ nút sửa mới thêm
         btnEditProfile = view.findViewById(R.id.btn_edit_profile);
+
+        btnQuizHistory.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), QuizHistoryActivity.class);
+            startActivity(intent);
+        });
 
         // 1. Sự kiện nút Chỉnh sửa hồ sơ
         btnEditProfile.setOnClickListener(v -> showEditProfileBottomSheet());
@@ -86,6 +92,7 @@ public class ProfileFragment extends Fragment {
         loadRealtimeTaskCounts();
     }
 
+
     private void loadUserProfileData() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {
@@ -96,6 +103,7 @@ public class ProfileFragment extends Fragment {
                     .document(currentUid)
                     .get()
                     .addOnSuccessListener(documentSnapshot -> {
+                        // Kiểm tra an toàn: Đảm bảo Fragment vẫn đang gắn với Activity
                         if (!isAdded() || getActivity() == null) return;
 
                         if (documentSnapshot.exists()) {
@@ -110,9 +118,13 @@ public class ProfileFragment extends Fragment {
                                 updateProfileUi(currentName, currentMssv, currentClass);
                             }
 
+                            // CẬP NHẬT GIAO DIỆN NÚT BẤM LỊCH SỬ THAY VÌ TEXTVIEW
                             if (documentSnapshot.contains("highScore")) {
                                 long highScore = documentSnapshot.getLong("highScore");
-                                tvHighScore.setText("Điểm trắc nghiệm cao nhất: " + highScore + " / 3");
+                                // Kiểm tra biến btnQuizHistory đã được ánh xạ chưa trước khi set chữ
+                                if (btnQuizHistory != null) {
+                                    btnQuizHistory.setText("Lịch sử ôn tập (Điểm cao: " + highScore + ")");
+                                }
                             }
                         }
                     });

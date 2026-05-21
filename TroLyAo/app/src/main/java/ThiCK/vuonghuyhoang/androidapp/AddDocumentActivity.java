@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -35,48 +36,74 @@ public class AddDocumentActivity extends AppCompatActivity {
                     return;
                 }
 
-                // Hiển thị màn hình chờ loading
-                progressDialog = new android.app.ProgressDialog(AddDocumentActivity.this);
-                progressDialog.setMessage("🤖 Trợ lý AI đang đọc tài liệu và biên soạn câu hỏi trắc nghiệm, vui lòng chờ...");
-                progressDialog.setCancelable(false);
-                progressDialog.show();
+                // THAY ĐỔI: Thay vì gọi AI ngay, hiển thị hộp thoại chọn số lượng câu hỏi
+                showQuantitySelectionDialog(content);
+            }
+        });
+    }
 
-                // Cấu trúc System Prompt để ép Gemini trả về chuỗi định dạng JSON chuẩn xác
-                String systemInstruction = "\n\n[HƯỚNG DẪN HỆ THỐNG]: Bạn là một Giảng viên đại học chuyên nghiệp. Hãy đọc kỹ đoạn văn bản tài liệu do sinh viên cung cấp ở trên, trích xuất kiến thức cốt lõi và biên soạn đúng 3 câu hỏi trắc nghiệm khách quan để kiểm tra kiến thức bài học."
-                        + " Bạn BẮT BUỘC phải trả về kết quả ở CUỐI bài viết của mình dưới dạng một chuỗi JSON chuẩn xác theo cấu trúc sau, không được sai một ký tự nào: "
-                        + "---QUIZ_START--- {\"quiz\": [{\"question\": \"Nội dung câu hỏi hỏi gì?\", \"options\": [\"Đáp án A\", \"Đáp án B\", \"Đáp án C\", \"Đáp án D\"], \"correctIndex\": 0, \"explanation\": \"Lời giải thích ngắn gọn tại sao đáp án này đúng bằng tiếng Việt\"}]} ---QUIZ_END---. "
-                        + "Trong đó, fields 'correctIndex' là số nguyên từ 0 đến 3 đại diện cho vị trí đáp án đúng trong mảng 'options'. Hãy đặt nội dung các câu hỏi thật sát kiến thức.";
+    /**
+     * Hộp thoại trực quan cho phép người dùng lựa chọn số lượng câu hỏi Quiz muốn tạo
+     */
+    private void showQuantitySelectionDialog(String content) {
+        String[] options = {"Tạo nhanh (3 câu hỏi)", "Tiêu chuẩn (5 câu hỏi)", "Thử thách (10 câu hỏi)", "Chuyên sâu (15 câu hỏi)"};
+        int[] counts = {3, 5, 10, 15};
 
-                String finalPrompt = content + systemInstruction;
+        new AlertDialog.Builder(this)
+                .setTitle("Cấu hình số lượng câu hỏi")
+                .setItems(options, (dialog, which) -> {
+                    int selectedCount = counts[which];
+                    // Tiến hành gọi AI sinh câu hỏi theo số lượng đã chọn
+                    generateQuizWithAi(content, selectedCount);
+                })
+                .show();
+    }
 
-                geminiClient.sendPrompt(finalPrompt, new AiCallback() {
-                    @Override
-                    public void onSuccess(String response) {
-                        runOnUiThread(() -> {
-                            if (progressDialog != null && progressDialog.isShowing()) progressDialog.dismiss();
+    /**
+     * Gửi dữ liệu tới Gemini với số lượng câu hỏi được cấu hình động
+     */
+    private void generateQuizWithAi(String content, int questionCount) {
+        // Hiển thị màn hình chờ loading thông minh kèm số câu hỏi đang tạo
+        progressDialog = new android.app.ProgressDialog(AddDocumentActivity.this);
+        progressDialog.setMessage("🤖 Trợ lý AI đang phân tích tài liệu và biên soạn bộ " + questionCount + " câu hỏi trắc nghiệm, vui lòng chờ...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
 
-                            if (response.contains("---QUIZ_START---") && response.contains("---QUIZ_END---")) {
-                                int startIndex = response.indexOf("---QUIZ_START---") + "---QUIZ_START---".length();
-                                int endIndex = response.indexOf("---QUIZ_END---");
-                                String jsonResult = response.substring(startIndex, endIndex).trim();
+        // TỐI ƯU PROMPT: Chèn biến số lượng câu hỏi dynamic và thắt chặt cấu trúc JSON đầu ra khi tăng số câu
+        String systemInstruction = "\n\n[HƯỚNG DẪN HỆ THỐNG RIGID]: Bạn là một Giảng viên đại học chuyên nghiệp. "
+                + "Hãy đọc kỹ đoạn văn bản tài liệu do sinh viên cung cấp ở trên, trích xuất toàn bộ kiến thức cốt lõi và biên soạn đúng CHÍNH XÁC " + questionCount + " câu hỏi trắc nghiệm khách quan.\n"
+                + "Bạn BẮT BUỘC phải trả về kết quả ở CUỐI bài viết của mình dưới dạng một chuỗi JSON thuần túy, tuyệt đối không kèm text giải thích ngoài lề, bọc đúng trong cặp thẻ đánh dấu cấu trúc như sau:\n"
+                + "---QUIZ_START--- {\"quiz\": [{\"question\": \"Nội dung câu hỏi?\", \"options\": [\"Đáp án A\", \"Đáp án B\", \"Đáp án C\", \"Đáp án D\"], \"correctIndex\": 0, \"explanation\": \"Lời giải thích ngắn gọn bằng tiếng Việt\"}]} ---QUIZ_END---\n"
+                + "Lưu ý nghiêm ngặt: 'correctIndex' bắt đầu từ 0 đến 3 ứng với vị trí câu trả lời chính xác trong mảng 'options'. Đảm bảo phân bổ đều đáp án đúng và câu hỏi bám sát nội dung chuyên ngành.";
 
-                                // Truyền chuỗi JSON thô sang cho QuizActivity bóc tách và hiển thị
-                                Intent intent = new Intent(AddDocumentActivity.this, QuizActivity.class);
-                                intent.putExtra("QUIZ_JSON", jsonResult);
-                                startActivity(intent);
-                            } else {
-                                Toast.makeText(AddDocumentActivity.this, "AI phản hồi bận, vui lòng thử nhấn lại!", Toast.LENGTH_SHORT).show();
-                            }
-                        });
+        String finalPrompt = content + systemInstruction;
+
+        geminiClient.sendPrompt(finalPrompt, new AiCallback() {
+            @Override
+            public void onSuccess(String response) {
+                runOnUiThread(() -> {
+                    if (progressDialog != null && progressDialog.isShowing()) progressDialog.dismiss();
+
+                    if (response.contains("---QUIZ_START---") && response.contains("---QUIZ_END---")) {
+                        int startIndex = response.indexOf("---QUIZ_START---") + "---QUIZ_START---".length();
+                        int endIndex = response.indexOf("---QUIZ_END---");
+                        String jsonResult = response.substring(startIndex, endIndex).trim();
+
+                        // Truyền chuỗi JSON đã bóc tách mượt mà sang cho QuizActivity (đã cấu hình Gson đón nhận ở bước trước)
+                        Intent intent = new Intent(AddDocumentActivity.this, QuizActivity.class);
+                        intent.putExtra("QUIZ_JSON", jsonResult);
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(AddDocumentActivity.this, "Đường truyền AI bị nghẽn hoặc cấu trúc phản hồi không hợp lệ, vui lòng thử lại!", Toast.LENGTH_SHORT).show();
                     }
+                });
+            }
 
-                    @Override
-                    public void onError(String error) {
-                        runOnUiThread(() -> {
-                            if (progressDialog != null && progressDialog.isShowing()) progressDialog.dismiss();
-                            Toast.makeText(AddDocumentActivity.this, "Lỗi kết nối AI: " + error, Toast.LENGTH_LONG).show();
-                        });
-                    }
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    if (progressDialog != null && progressDialog.isShowing()) progressDialog.dismiss();
+                    Toast.makeText(AddDocumentActivity.this, "Lỗi kết nối AI: " + error, Toast.LENGTH_LONG).show();
                 });
             }
         });

@@ -12,8 +12,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:paddingTop="24dp"
-        android:paddingBottom="24dp"
+        android:paddingTop="18dp"
         android:layout_marginBottom="16dp">
 
         <com.google.android.material.card.MaterialCardView
@@ -53,15 +52,19 @@
             android:textSize="14sp"
             android:textColor="@color/hintColor"/>
 
-        <TextView
-            android:id="@+id/tv_profile_highscore"
-            android:layout_width="wrap_content"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_quiz_history"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Điểm trắc nghiệm cao nhất: 0/3"
-            android:textSize="14sp"
+            android:layout_marginHorizontal="32dp"
+            android:layout_marginTop="10dp"
+            android:text="Lịch sử ôn tập (Điểm cao: 0)"
+            android:textColor="@android:color/white"
             android:textStyle="bold"
-            android:textColor="@color/primaryColor"
-            android:layout_marginTop="4dp"/>
+            app:backgroundTint="#4CAF50"
+            app:icon="@android:drawable/ic_menu_recent_history"
+            app:iconTint="@android:color/white"
+            style="@style/Widget.MaterialComponents.Button.Icon" />
     </LinearLayout>
 
     <LinearLayout
@@ -179,7 +182,7 @@
         app:cornerRadius="12dp"
         android:textSize="14sp"
         android:textStyle="bold"
-        android:layout_marginBottom="12dp"/>
+        android:layout_marginBottom="10dp"/>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_logout"

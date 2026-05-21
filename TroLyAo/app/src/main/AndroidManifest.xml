@@ -37,6 +37,7 @@
         <activity
             android:name=".QuizActivity"
             android:exported="false" />
+        <activity android:name=".QuizHistoryActivity" android:exported="false" />
     </application>
 
 </manifest>

@@ -4,53 +4,71 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/backgroundColor">
+    android:background="@color/app_bg_color"> <androidx.recyclerview.widget.RecyclerView
+    android:id="@+id/recycler_chat"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="20dp"
+    android:clipToPadding="false"
+    app:layout_constraintBottom_toTopOf="@+id/layout_input"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Danh sách tin nhắn -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_chat"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:padding="12dp"
-        android:clipToPadding="false"
-        app:layout_constraintBottom_toTopOf="@+id/layout_input"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <!-- Khu vực nhập tin nhắn -->
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/layout_input"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@color/surfaceColor"
-        android:elevation="8dp"
-        android:orientation="horizontal"
-        android:padding="8dp"
+        android:background="@color/app_surface_color"
+        android:elevation="16dp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <EditText
-            android:id="@+id/edt_message"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:hint="Hỏi AI về đồ án của bạn..."
-            android:maxLines="4"
-            android:padding="12dp"
-            android:textColor="@color/textColorPrimary" />
+            android:background="@drawable/bg_chat_input"
+            android:gravity="bottom"
+            android:orientation="horizontal"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="6dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/btn_send"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:src="@android:drawable/ic_menu_send"
-            app:backgroundTint="@color/primaryColor"
-            app:fabSize="mini"
-            app:tint="@color/surfaceColor" />
-    </LinearLayout>
+            <EditText
+                android:id="@+id/edt_message"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:hint="Hỏi AI để lên lộ trình học tập..."
+                android:maxLines="5"
+                android:minHeight="48dp"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="10dp"
+                android:textColor="@color/app_text_primary"
+                android:textColorHint="@color/app_text_tertiary"
+                android:textSize="15sp" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btn_send"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginEnd="2dp"
+                android:contentDescription="Gửi tin nhắn"
+                android:src="@android:drawable/ic_menu_send"
+                app:backgroundTint="@color/app_primary_color"
+                app:elevation="0dp"
+                app:fabSize="mini"
+                app:tint="@color/app_surface_color" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

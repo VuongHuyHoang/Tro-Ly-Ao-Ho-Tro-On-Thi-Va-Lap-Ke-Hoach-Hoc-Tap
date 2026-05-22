@@ -15,14 +15,22 @@ public class QuizHistoryAdapter extends RecyclerView.Adapter<QuizHistoryAdapter.
 
     private List<SavedQuiz> historyList;
     private OnQuizItemClickListener clickListener;
+    private OnQuizItemLongClickListener longClickListener; // Khai báo thêm
 
     public interface OnQuizItemClickListener {
         void onQuizClick(SavedQuiz savedQuiz);
     }
 
-    public QuizHistoryAdapter(List<SavedQuiz> historyList, OnQuizItemClickListener clickListener) {
+    // Giao diện cho sự kiện nhấn giữ
+    public interface OnQuizItemLongClickListener {
+        void onQuizLongClick(SavedQuiz savedQuiz);
+    }
+
+    // Cập nhật Constructor
+    public QuizHistoryAdapter(List<SavedQuiz> historyList, OnQuizItemClickListener clickListener, OnQuizItemLongClickListener longClickListener) {
         this.historyList = historyList;
         this.clickListener = clickListener;
+        this.longClickListener = longClickListener;
     }
 
     @NonNull
@@ -36,15 +44,20 @@ public class QuizHistoryAdapter extends RecyclerView.Adapter<QuizHistoryAdapter.
     public void onBindViewHolder(@NonNull HistoryViewHolder holder, int position) {
         SavedQuiz quiz = historyList.get(position);
 
-        holder.tvTitle.setText(quiz.getTitle());
+        holder.tvTitle.setText(quiz.getTitle()); // Đã có sẵn ngữ cảnh tên đề thi
         holder.tvScore.setText("Điểm: " + quiz.getScore() + "/" + quiz.getTotalQuestions());
 
-        // Định dạng thời gian hiển thị thân thiện
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
         holder.tvTime.setText("Ngày tạo: " + sdf.format(new Date(quiz.getTimestamp())));
 
-        // Bắt sự kiện khi click vào bộ đề cũ
+        // Bắt sự kiện Click ngắn (Làm bài)
         holder.itemView.setOnClickListener(v -> clickListener.onQuizClick(quiz));
+
+        // Bắt sự kiện Nhấn giữ (Xóa bài)
+        holder.itemView.setOnLongClickListener(v -> {
+            longClickListener.onQuizLongClick(quiz);
+            return true;
+        });
     }
 
     @Override

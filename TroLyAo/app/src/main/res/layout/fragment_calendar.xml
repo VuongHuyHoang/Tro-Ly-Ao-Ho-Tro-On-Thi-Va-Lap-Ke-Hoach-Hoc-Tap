@@ -4,112 +4,113 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="@color/app_bg_color"> <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="32dp">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="24dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tv_month_year_title"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
+            android:layout_weight="1"
+            android:text="Tháng 05 năm 2026"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/app_text_primary"
+            android:letterSpacing="-0.02"/>
 
-            <TextView
-                android:id="@+id/tv_month_year_title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Tháng 05 năm 2026"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#1A1C1E"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_back_to_today"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="Hôm nay"
+            android:textColor="@color/app_primary_color"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="4dp"
+            app:icon="@android:drawable/ic_menu_today"
+            app:iconSize="18dp"
+            app:iconTint="@color/app_primary_color"
+            app:cornerRadius="12dp"/>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_back_to_today"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Hôm nay"
-                android:textColor="#1976D2"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:layout_marginEnd="4dp"
-                app:icon="@android:drawable/ic_menu_today"
-                app:iconSize="16dp"
-                app:iconTint="#1976D2"/>
+        <ImageButton
+            android:id="@+id/btn_previous_month"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_media_previous"
+            android:contentDescription="Tháng trước"
+            app:tint="@color/app_text_secondary"/>
 
-            <ImageButton
-                android:id="@+id/btn_previous_month"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_media_previous"
-                android:contentDescription="Tháng trước"
-                app:tint="#44474E"/>
-
-            <ImageButton
-                android:id="@+id/btn_next_month"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_media_next"
-                android:contentDescription="Tháng sau"
-                app:tint="#44474E"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/layout_weekday_header"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingVertical="6dp"
-            android:background="#F1F3F4"
-            android:layout_marginBottom="2dp">
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="CN" android:textColor="#D32F2F" android:textStyle="bold" android:gravity="center" android:textSize="12sp"/>
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T2" android:textColor="#44474E" android:gravity="center" android:textSize="12sp"/>
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T3" android:textColor="#44474E" android:gravity="center" android:textSize="12sp"/>
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T4" android:textColor="#44474E" android:gravity="center" android:textSize="12sp"/>
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T5" android:textColor="#44474E" android:gravity="center" android:textSize="12sp"/>
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T6" android:textColor="#44474E" android:gravity="center" android:textSize="12sp"/>
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T7" android:textColor="#44474E" android:gravity="center" android:textSize="12sp"/>
-        </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_calendar_grid"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#E0E0E0"
-            android:overScrollMode="never"/>
+        <ImageButton
+            android:id="@+id/btn_next_month"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_media_next"
+            android:contentDescription="Tháng sau"
+            app:tint="@color/app_text_secondary"/>
     </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layout_weekday_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="CN" android:textColor="@color/app_error_color" android:textStyle="bold" android:gravity="center" android:textSize="13sp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T2" android:textColor="@color/app_text_secondary" android:textStyle="bold" android:gravity="center" android:textSize="13sp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T3" android:textColor="@color/app_text_secondary" android:textStyle="bold" android:gravity="center" android:textSize="13sp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T4" android:textColor="@color/app_text_secondary" android:textStyle="bold" android:gravity="center" android:textSize="13sp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T5" android:textColor="@color/app_text_secondary" android:textStyle="bold" android:gravity="center" android:textSize="13sp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T6" android:textColor="@color/app_text_secondary" android:textStyle="bold" android:gravity="center" android:textSize="13sp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="T7" android:textColor="@color/app_text_secondary" android:textStyle="bold" android:gravity="center" android:textSize="13sp"/>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_calendar_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:overScrollMode="never"/>
+</LinearLayout>
 
     <LinearLayout
         android:id="@+id/layout_agenda_sheet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="@android:color/white"
-        android:elevation="16dp"
+        android:background="@drawable/bg_bottom_sheet_rounded"
+        android:elevation="24dp"
         app:behavior_hideable="true"
-        app:behavior_peekHeight="200dp"
+        app:behavior_peekHeight="320dp"
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
-        <View android:layout_width="40dp"
-            android:layout_height="4dp"
-            android:background="#E0E0E0"
+        <View
+            android:layout_width="48dp"
+            android:layout_height="5dp"
+            android:background="@drawable/bg_drag_handle"
             android:layout_gravity="center"
             android:layout_marginTop="12dp"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="12dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="24dp"
             android:paddingVertical="8dp"
             android:gravity="center_vertical">
 
@@ -118,21 +119,25 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Hôm nay"
-                android:textColor="#44474E"
+                android:text="Lịch trình Hôm nay"
+                android:textColor="@color/app_text_primary"
                 android:textStyle="bold"
-                android:textSize="16sp"/>
+                android:textSize="18sp"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_smart_suggest"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Gợi ý tối ưu"
-                android:textColor="#2E7D32"
+                android:layout_height="44dp"
+                android:text="Gợi ý AI"
+                android:textColor="@color/app_success_color"
+                android:textSize="13sp"
                 android:textStyle="bold"
+                app:backgroundTint="@color/app_success_light"
+                app:cornerRadius="12dp"
+                app:elevation="0dp"
                 app:icon="@android:drawable/ic_menu_compass"
-                app:iconTint="#2E7D32"/>
+                app:iconTint="@color/app_success_color"
+                app:iconSize="16dp"/>
         </LinearLayout>
 
         <LinearLayout
@@ -142,28 +147,43 @@
             android:orientation="vertical"
             android:gravity="center"
             android:visibility="gone"
-            android:paddingBottom="40dp">
-            <ImageView
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:src="@android:drawable/ic_menu_today"
-                app:tint="#BDBDBD"/>
+            android:paddingBottom="64dp"
+            android:paddingHorizontal="32dp">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Thật thảnh thơi! Không có công việc nào."
-                android:textColor="#757575"
-                android:textStyle="italic"
-                android:textSize="14sp"/>
+                android:text="☕"
+                android:textSize="56sp"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ngày nghỉ thảnh thơi"
+                android:textColor="@color/app_text_primary"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bạn chưa có lịch trình nào cho ngày này. Hãy tận hưởng thời gian nghỉ ngơi nhé!"
+                android:textColor="@color/app_text_secondary"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"/>
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_calendar_tasks"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="8dp"
             android:clipToPadding="false"
+            android:paddingBottom="40dp"
             android:scrollbars="none"/>
     </LinearLayout>
 

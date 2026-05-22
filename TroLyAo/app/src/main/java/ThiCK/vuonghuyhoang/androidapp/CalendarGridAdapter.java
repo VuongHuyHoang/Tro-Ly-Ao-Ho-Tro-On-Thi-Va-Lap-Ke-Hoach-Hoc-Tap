@@ -122,9 +122,12 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
             private int getPriorityWeight(String priority) {
                 if (priority == null) return 1;
                 switch (priority) {
-                    case "Cao": return 3;
-                    case "Trung bình": return 2;
-                    default: return 1;
+                    case "Cao":
+                        return 3;
+                    case "Trung bình":
+                        return 2;
+                    default:
+                        return 1;
                 }
             }
         });
@@ -132,30 +135,39 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
         // --- 3. ĐIỀU CHỈNH CHIỀU CAO Ô LỊCH THEO TRẠNG THÁI (TÍNH NĂNG MỚI) ---
         ViewGroup.LayoutParams layoutParams = holder.itemView.getLayoutParams();
 
+        int colorHigh = holder.itemView.getContext().getResources().getColor(R.color.pastel_high);
+        int colorMedium = holder.itemView.getContext().getResources().getColor(R.color.pastel_medium);
+        int colorLow = holder.itemView.getContext().getResources().getColor(R.color.pastel_low);
+        int colorDone = holder.itemView.getContext().getResources().getColor(R.color.pastel_done);
+
+        holder.tvMiniTask1.setVisibility(View.GONE);
+        holder.tvMiniTask2.setVisibility(View.GONE);
+        holder.tvTaskOverflow.setVisibility(View.GONE);
+
         if (isCompactMode) {
             // NẾU ĐANG BẬT DANH SÁCH: Co rút chiều cao ô lịch lại còn 50dp và ẩn các dòng text công việc
-            layoutParams.height = dpToPx(holder.itemView.getContext(), 80);
-        }
-        else
-            layoutParams.height = dpToPx(holder.itemView.getContext(), 95);
-
-            if (dayTasks.size() > 2) {
+            layoutParams.height = dpToPx(holder.itemView.getContext(), 58);
+            if (dayTasks.size() > 0) {
                 holder.tvTaskOverflow.setVisibility(View.VISIBLE);
-                holder.tvTaskOverflow.setText("+" + (dayTasks.size() - 2) + " việc");
+                holder.tvTaskOverflow.setText("+" + dayTasks.size() + " việc");
             } else {
                 holder.tvTaskOverflow.setVisibility(View.GONE);
             }
+        } else
+            {
+            layoutParams.height = dpToPx(holder.itemView.getContext(), 95);
+        if (dayTasks.size() > 0)
+            setMiniTaskStyle(holder.tvMiniTask1, dayTasks.get(0), colorHigh, colorMedium, colorLow, colorDone);
+        if (dayTasks.size() > 1)
+            setMiniTaskStyle(holder.tvMiniTask2, dayTasks.get(1), colorHigh, colorMedium, colorLow, colorDone);
+                if (dayTasks.size() > 2) {
+                    holder.tvTaskOverflow.setVisibility(View.VISIBLE);
+                    holder.tvTaskOverflow.setText("+" + (dayTasks.size() - 2) + " việc");
+                } else {
+                    holder.tvTaskOverflow.setVisibility(View.GONE);
+                }
 
-            holder.tvMiniTask1.setVisibility(View.GONE);
-            holder.tvMiniTask2.setVisibility(View.GONE);
-
-            int colorHigh = holder.itemView.getContext().getResources().getColor(R.color.pastel_high);
-            int colorMedium = holder.itemView.getContext().getResources().getColor(R.color.pastel_medium);
-            int colorLow = holder.itemView.getContext().getResources().getColor(R.color.pastel_low);
-            int colorDone = holder.itemView.getContext().getResources().getColor(R.color.pastel_done);
-
-            if (dayTasks.size() > 0) setMiniTaskStyle(holder.tvMiniTask1, dayTasks.get(0), colorHigh, colorMedium, colorLow, colorDone);
-            if (dayTasks.size() > 1) setMiniTaskStyle(holder.tvMiniTask2, dayTasks.get(1), colorHigh, colorMedium, colorLow, colorDone);
+            }
 
         holder.itemView.setLayoutParams(layoutParams); // Áp dụng kích thước mới
 

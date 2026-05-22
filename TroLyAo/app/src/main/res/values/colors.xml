@@ -17,5 +17,16 @@
     <color name="pastel_medium">#FFE0B2</color>
     <color name="pastel_low">#C8E6C9</color>
     <color name="pastel_done">#E0E0E0</color>
+    <color name="app_bg_color">#F8FAFC</color>
+    <color name="app_surface_color">#FFFFFF</color>
+    <color name="app_primary_color">#4F46E5</color>
+    <color name="app_primary_dark">#3730A3</color>
+    <color name="app_primary_light">#EEF2FF</color>
+    <color name="app_text_primary">#0F172A</color>
+    <color name="app_text_secondary">#64748B</color>
+    <color name="app_text_tertiary">#94A3B8</color>
+    <color name="app_error_color">#EF4444</color>
+    <color name="app_success_color">#10B981</color>
+    <color name="app_success_light">#D1FAE5</color>
 
 </resources>

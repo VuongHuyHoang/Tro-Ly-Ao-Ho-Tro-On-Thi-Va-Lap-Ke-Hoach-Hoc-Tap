@@ -3,6 +3,16 @@
     <style name="Base.Theme.TroLyAoHoTroOnThi" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+
+<!--        <item name="colorPrimary">@color/primaryColor</item>-->
+<!--        <item name="android:statusBarColor">#F8FAFC</item>-->
+
+<!--        <item name="android:windowLightStatusBar">true</item>-->
+        <item name="android:windowBackground">@drawable/background_global</item>
+
+        <item name="android:statusBarColor">@color/app_bg_pastel</item>
+
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.TroLyAoHoTroOnThi" parent="Base.Theme.TroLyAoHoTroOnThi" />

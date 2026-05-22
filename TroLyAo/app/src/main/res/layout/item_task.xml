@@ -19,9 +19,9 @@
             android:id="@+id/checkbox_task"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_deadline"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="@+id/tv_task_name" />
 
         <TextView
             android:id="@+id/tv_task_name"
@@ -38,7 +38,7 @@
 
         <TextView
             android:id="@+id/tv_deadline"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
             android:layout_marginTop="4dp"
@@ -46,9 +46,9 @@
             android:textColor="@color/textColorSecondary"
             android:textSize="13sp"
             app:layout_constraintStart_toEndOf="@id/checkbox_task"
-            app:layout_constraintTop_toBottomOf="@id/tv_task_name" />
+            app:layout_constraintTop_toBottomOf="@id/tv_task_name"
+            app:layout_constraintEnd_toStartOf="@+id/chip_priority" />
 
-        <!-- Nhãn độ ưu tiên (Đỏ/Vàng/Xanh) -->
         <com.google.android.material.chip.Chip
             android:id="@+id/chip_priority"
             android:layout_width="wrap_content"
@@ -57,9 +57,25 @@
             android:textColor="#D32F2F"
             app:chipBackgroundColor="#FFCDD2"
             app:chipMinHeight="24dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_deadline"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="@+id/tv_task_name" />
+
+        <TextView
+            android:id="@+id/tv_task_description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"
+            android:background="#EEEEEE"
+            android:textColor="#424242"
+            android:textSize="13sp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/tv_deadline"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

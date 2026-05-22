@@ -20,6 +20,7 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private List<TaskWrapper> visibleList;
     private OnHeaderClickListener headerClickListener;
+    private int expandedPosition = -1;
 
     // Interface để báo cho Fragment biết khi người dùng bấm mở/đóng danh mục
     public interface OnHeaderClickListener {
@@ -79,7 +80,7 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             });
 
         } else {
-            // XỬ LÝ THẺ CÔNG VIỆC (Đoạn code cũ của bạn đưa vào đây)
+            // XỬ LÝ THẺ CÔNG VIỆC
             TaskViewHolder taskHolder = (TaskViewHolder) holder;
             StudyTask task = item.task;
 
@@ -153,9 +154,23 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                             .collection("users").document(auth.getCurrentUser().getUid())
                             .collection("user_tasks").document(String.valueOf(task.getId()))
                             .update("completed", isChecked);
-                    // Dùng notifyDataSetChanged thay cho notifyItemChanged để an toàn hơn với Accordion
                     notifyDataSetChanged();
                 }
+            });
+
+            // ---------------------------------------------------------
+            // BẮT ĐẦU: LOGIC HIỂN THỊ MÔ TẢ VÀ HIỆU ỨNG THẢ RƠI
+            // Bắt sự kiện Click vào chiếc thẻ Task để mở hẳn màn hình chi tiết mới
+            taskHolder.itemView.setOnClickListener(v -> {
+                // Đóng gói Object công việc hiện tại thành chuỗi văn bản JSON
+                String taskJson = new com.google.gson.Gson().toJson(task);
+
+                // Khởi tạo Intent dẫn đường sang màn hình EditTaskActivity
+                android.content.Intent intent = new android.content.Intent(v.getContext(), EditTaskActivity.class);
+                intent.putExtra("TASK_JSON", taskJson);
+
+                // Kích hoạt mở màn hình
+                v.getContext().startActivity(intent);
             });
         }
     }
@@ -183,6 +198,7 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         TextView tvDeadline;
         Chip chipPriority;
         CheckBox checkBox;
+        TextView tvTaskDescription;
 
         public TaskViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -191,6 +207,7 @@ public class TaskAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             tvDeadline = itemView.findViewById(R.id.tv_deadline);
             chipPriority = itemView.findViewById(R.id.chip_priority);
             checkBox = itemView.findViewById(R.id.checkbox_task);
+            tvTaskDescription = itemView.findViewById(R.id.tv_task_description);
         }
     }
 }

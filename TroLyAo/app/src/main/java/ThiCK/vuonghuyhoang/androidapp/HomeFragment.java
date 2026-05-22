@@ -240,6 +240,7 @@ public class HomeFragment extends Fragment {
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
         View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.layout_bottom_sheet_detail, null);
 
+        TextView tvDetailDescription = sheetView.findViewById(R.id.tv_detail_description);
         TextView tvDetailTitle = sheetView.findViewById(R.id.tv_detail_title);
         TextView tvDetailDeadline = sheetView.findViewById(R.id.tv_detail_deadline);
         TextView tvDetailEstimatedTime = sheetView.findViewById(R.id.tv_detail_estimated_time);
@@ -259,6 +260,14 @@ public class HomeFragment extends Fragment {
         tvDetailDeadline.setText("Hạn chót: " + timeStr + " - " + task.getDeadline());
         chipDetailPriority.setText("Độ ưu tiên: " + task.getPriority());
 
+        // Đổ dữ liệu Mô tả chi tiết
+        if (task.getDescription() != null && !task.getDescription().trim().isEmpty()) {
+            tvDetailDescription.setText(task.getDescription());
+            tvDetailDescription.setTypeface(null, android.graphics.Typeface.NORMAL);
+        } else {
+            tvDetailDescription.setText("Không có ghi chú hoặc mô tả.");
+            tvDetailDescription.setTypeface(null, android.graphics.Typeface.ITALIC); // In nghiêng nếu không có mô tả
+        }
         if (task.isCompleted()) {
             tvDetailStatus.setText("Trạng thái: Đã hoàn thành hoàn tất 🎉");
             tvDetailStatus.setTextColor(android.graphics.Color.parseColor("#2E7D32"));
@@ -273,12 +282,17 @@ public class HomeFragment extends Fragment {
     }
 
     // TÍCH HỢP: Hàm hiển thị Bottom Sheet để thêm Task thủ công (ĐÃ NÂNG CẤP THÊM GIỜ & THỜI LƯỢNG)
+    // TÍCH HỢP: Hàm hiển thị Bottom Sheet để thêm Task thủ công (ĐÃ NÂNG CẤP THÊM MÔ TẢ)
     private void showAddTaskBottomSheet() {
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
         View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.layout_bottom_sheet_add_task, null);
 
         android.widget.AutoCompleteTextView edtCategory = sheetView.findViewById(R.id.edt_task_category);
         TextInputEditText edtName = sheetView.findViewById(R.id.edt_task_name);
+
+        // 1. [BỔ SUNG] ÁNH XẠ Ô NHẬP MÔ TẢ MỚI TỪ XML
+        TextInputEditText edtDescription = sheetView.findViewById(R.id.edt_task_description);
+
         com.google.android.material.textfield.TextInputLayout layoutDeadline = sheetView.findViewById(R.id.layout_task_deadline);
         TextInputEditText edtDeadline = sheetView.findViewById(R.id.edt_task_deadline);
         RadioGroup radioGroupPriority = sheetView.findViewById(R.id.radio_group_priority);
@@ -291,7 +305,6 @@ public class HomeFragment extends Fragment {
                     uniqueCategories.add(task.getCategory());
                 }
             }
-            // Đưa Set vào List và gán vào Adapter
             List<String> categoryList = new ArrayList<>(uniqueCategories);
             android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<>(
                     requireContext(),
@@ -300,25 +313,20 @@ public class HomeFragment extends Fragment {
             );
             edtCategory.setAdapter(adapter);
 
-            // Tùy chọn: Khi bấm vào ô, tự động xổ danh sách ra luôn
             edtCategory.setOnFocusChangeListener((v, hasFocus) -> {
                 if (hasFocus) edtCategory.showDropDown();
             });
             edtCategory.setOnClickListener(v -> edtCategory.showDropDown());
         }
 
-        // 3. TỐI ƯU HÓA NGÀY THÁNG: Click vào icon Lịch ở cuối sẽ hiện MaterialDatePicker
         if (layoutDeadline != null) {
             layoutDeadline.setEndIconOnClickListener(v -> showDatePicker(edtDeadline));
         }
 
-        // 1. ÁNH XẠ 2 Ô NHẬP MỚI
         TextInputEditText edtTime = sheetView.findViewById(R.id.edt_task_time);
         TextInputEditText edtEstimated = sheetView.findViewById(R.id.edt_task_estimated_minutes);
 
-        // 2. KÍCH HOẠT BẢNG CHỌN GIỜ KHI BẤM VÀO Ô NHẬP GIỜ
         if (edtTime != null) {
-            // Chặn bàn phím ảo bật lên, chỉ cho phép bấm để mở bảng chọn giờ
             edtTime.setFocusable(false);
             edtTime.setClickable(true);
             edtTime.setOnClickListener(v -> showTimePicker(edtTime));
@@ -328,6 +336,12 @@ public class HomeFragment extends Fragment {
             String taskName = edtName.getText().toString().trim();
             String deadline = edtDeadline.getText().toString().trim();
 
+            // 2. [BỔ SUNG] LẤY CHUỖI DỮ LIỆU TỪ Ô MÔ TẢ
+            String taskDescription = "";
+            if (edtDescription != null && edtDescription.getText() != null) {
+                taskDescription = edtDescription.getText().toString().trim();
+            }
+
             String category = "";
             if (edtCategory != null && edtCategory.getText() != null) {
                 category = edtCategory.getText().toString().trim();
@@ -336,7 +350,6 @@ public class HomeFragment extends Fragment {
                 category = "Công việc chung";
             }
 
-            // Lấy dữ liệu Giờ và Thời lượng (nếu trống thì gán mặc định 23:59 và 60 phút)
             String dueTime = (edtTime != null && edtTime.getText() != null && !edtTime.getText().toString().isEmpty())
                     ? edtTime.getText().toString().trim() : "23:59";
 
@@ -348,12 +361,10 @@ public class HomeFragment extends Fragment {
                 return;
             }
 
-            // Ép kiểu chuỗi phút sang số nguyên (int)
             int estimatedMinutes = 60;
             try {
                 estimatedMinutes = Integer.parseInt(estimatedStr);
             } catch (NumberFormatException e) {
-                // Bỏ qua lỗi nếu người dùng nhập linh tinh
             }
 
             String priority = "Trung bình";
@@ -366,8 +377,8 @@ public class HomeFragment extends Fragment {
                 String currentUid = auth.getCurrentUser().getUid();
                 int newTaskId = (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
 
-                // 3. SỬ DỤNG CONSTRUCTOR MỚI: Truyền đủ 7 tham số để chuẩn bị cho Thuật toán tối ưu
-                StudyTask newTask = new StudyTask(category, newTaskId, taskName, deadline, priority, dueTime, estimatedMinutes, false);
+                // 3. [BỔ SUNG] TRUYỀN BIẾN taskDescription VÀO CONSTRUCTOR
+                StudyTask newTask = new StudyTask(category, newTaskId, taskName, taskDescription, deadline, priority, dueTime, estimatedMinutes, false);
 
                 FirebaseFirestore.getInstance()
                         .collection("users")

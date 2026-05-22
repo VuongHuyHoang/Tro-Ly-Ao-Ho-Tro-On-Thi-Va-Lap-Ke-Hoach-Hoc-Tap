@@ -107,14 +107,33 @@ public class QuizActivity extends AppCompatActivity {
             tvQuestion.setText(currentQuestion.getQuestion());
 
             List<String> options = currentQuestion.getOptions();
-            for (int i = 0; i < 4; i++) {
-                btnOptions[i].setText(options.get(i));
-                btnOptions[i].setBackgroundColor(Color.WHITE);
-                btnOptions[i].setTextColor(Color.parseColor("#212121"));
-                btnOptions[i].setEnabled(true);
-            }
 
-            // Bắt đầu đếm ngược ngay khi câu hỏi vừa hiển thị xong
+            // --- LOGIC GIAO DIỆN THÍCH ỨNG THEO LOẠI CÂU HỎI ---
+            if ("TRUE_FALSE".equals(currentQuestion.getType())) {
+                // Nếu là câu hỏi Đúng/Sai -> Chỉ xử lý và hiện 2 nút đầu
+                for (int i = 0; i < 2; i++) {
+                    btnOptions[i].setVisibility(View.VISIBLE); // Đảm bảo nút được hiện
+                    btnOptions[i].setText(options.get(i));
+                    btnOptions[i].setBackgroundColor(Color.WHITE);
+                    btnOptions[i].setTextColor(Color.parseColor("#212121"));
+                    btnOptions[i].setEnabled(true);
+                }
+                // Ẩn hoàn toàn nút số 3 và số 4 khỏi giao diện
+                btnOptions[2].setVisibility(View.GONE);
+                btnOptions[3].setVisibility(View.GONE);
+
+            } else {
+                // Nếu là câu hỏi trắc nghiệm 4 đáp án (MULTIPLE_CHOICE) -> Hiện đầy đủ cả 4 nút như cũ
+                for (int i = 0; i < 4; i++) {
+                    btnOptions[i].setVisibility(View.VISIBLE); // Hiện lại nút (đề phòng câu trước đó bị ẩn)
+                    btnOptions[i].setText(options.get(i));
+                    btnOptions[i].setBackgroundColor(Color.WHITE);
+                    btnOptions[i].setTextColor(Color.parseColor("#212121"));
+                    btnOptions[i].setEnabled(true);
+                }
+            }
+            // --- KẾT THÚC LOGIC THÍCH ỨNG ---
+
             startTimer();
 
         } catch (Exception e) {

@@ -23,9 +23,18 @@ public class AddDocumentActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_document);
 
+        android.widget.ImageView btnBackAddDoc = findViewById(R.id.btn_back_add_doc);
+
         edtDocumentContent = findViewById(R.id.edt_document_content);
         btnGenerateQuiz = findViewById(R.id.btn_generate_quiz);
         geminiClient = new GeminiClient();
+
+        btnBackAddDoc.setOnClickListener(new android.view.View.OnClickListener() {
+            @Override
+            public void onClick(android.view.View v) {
+                finish(); // Đóng Activity hiện tại, trả hệ thống về màn hình phía trước
+            }
+        });
 
         btnGenerateQuiz.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,10 +80,13 @@ public class AddDocumentActivity extends AppCompatActivity {
 
         // TỐI ƯU PROMPT: Chèn biến số lượng câu hỏi dynamic và thắt chặt cấu trúc JSON đầu ra khi tăng số câu
         String systemInstruction = "\n\n[HƯỚNG DẪN HỆ THỐNG RIGID]: Bạn là một Giảng viên đại học chuyên nghiệp. "
-                + "Hãy đọc kỹ đoạn văn bản tài liệu do sinh viên cung cấp ở trên, trích xuất toàn bộ kiến thức cốt lõi và biên soạn đúng CHÍNH XÁC " + questionCount + " câu hỏi trắc nghiệm khách quan.\n"
-                + "Bạn BẮT BUỘC phải trả về kết quả ở CUỐI bài viết của mình dưới dạng một chuỗi JSON thuần túy, tuyệt đối không kèm text giải thích ngoài lề, bọc đúng trong cặp thẻ đánh dấu cấu trúc như sau:\n"
-                + "---QUIZ_START--- {\"quiz\": [{\"question\": \"Nội dung câu hỏi?\", \"options\": [\"Đáp án A\", \"Đáp án B\", \"Đáp án C\", \"Đáp án D\"], \"correctIndex\": 0, \"explanation\": \"Lời giải thích ngắn gọn bằng tiếng Việt\"}]} ---QUIZ_END---\n"
-                + "Lưu ý nghiêm ngặt: 'correctIndex' bắt đầu từ 0 đến 3 ứng với vị trí câu trả lời chính xác trong mảng 'options'. Đảm bảo phân bổ đều đáp án đúng và câu hỏi bám sát nội dung chuyên ngành.";
+                + "Hãy đọc kỹ đoạn văn bản tài liệu do sinh viên cung cấp ở trên, trích xuất kiến thức cốt lõi và biên soạn đúng CHÍNH XÁC " + questionCount + " câu hỏi trắc nghiệm khách quan.\n"
+                + "YÊU CẦU ĐA DẠNG HÓA: Hãy trộn ngẫu nhiên giữa 2 loại câu hỏi:\n"
+                + "1. Loại 'MULTIPLE_CHOICE': Câu hỏi có 4 đáp án.\n"
+                + "2. Loại 'TRUE_FALSE': Câu hỏi Đúng hoặc Sai (Mảng 'options' bắt buộc chỉ có đúng 2 phần tử là [\"Đúng\", \"Sai\"]).\n"
+                + "Bạn BẮT BUỘC phải trả về kết quả dưới dạng một chuỗi JSON thuần túy, bọc đúng trong cặp thẻ đánh dấu cấu trúc như sau:\n"
+                + "---QUIZ_START--- {\"quiz\": [{\"type\": \"MULTIPLE_CHOICE hoặc TRUE_FALSE\", \"question\": \"Nội dung câu hỏi?\", \"options\": [\"đáp án...\"], \"correctIndex\": 0, \"explanation\": \"Lời giải thích\"}]} ---QUIZ_END---\n"
+                + "Lưu ý nghiêm ngặt: 'correctIndex' đại diện cho vị trí câu trả lời chính xác trong mảng 'options'. Tuyệt đối không kèm text ngoài lề.";
 
         String finalPrompt = content + systemInstruction;
 

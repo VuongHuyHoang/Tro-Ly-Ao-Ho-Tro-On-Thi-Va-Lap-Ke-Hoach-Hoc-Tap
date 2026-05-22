@@ -104,8 +104,9 @@ public class ChatFragment extends Fragment {
                 String systemInstruction = "Bạn là một trợ lý ảo thông minh giúp sinh viên lập kế hoạch học tập. " +
                         "Dựa vào yêu cầu của người dùng, hãy phân tích và tạo ra danh sách các công việc cần làm. " +
                         "TRẢ VỀ KẾT QUẢ DƯỚI DẠNG CHUỖI JSON ARRAY CHUẨN XÁC, KHÔNG CÓ MARKDOWN HAY CHỮ NÀO KHÁC BÊN NGOÀI. " +
-                        "Mỗi công việc trong JSON phải có đầy đủ 6 trường sau:\n" +
-                        "- \"taskName\": Tên công việc cụ thể.\n" +
+                        "Mỗi công việc trong JSON phải có đầy đủ 7 trường sau:\n" +
+                        "- \"taskName\": Tên công việc cụ thể (ngắn gọn).\n" +
+                        "- \"description\": Mô tả chi tiết (Các yêu cầu phụ, ghi chú, người làm chung... Nếu không có thì để rỗng \"\").\n" + // <-- BỔ SUNG TRƯỜNG NÀY
                         "- \"category\": Tên Dự án hoặc Danh mục của công việc này (Ví dụ: 'Đồ án Java', 'Học tiếng Anh'). Hãy tự suy luận tên danh mục ngắn gọn.\n" +
                         "- \"deadline\": Ngày hạn chót định dạng dd/MM/yyyy.\n" +
                         "- \"dueTime\": Giờ hạn chót định dạng HH:mm (VD: 14:30). Nếu không rõ, để '23:59'.\n" +
@@ -119,7 +120,7 @@ public class ChatFragment extends Fragment {
                         "3. Tránh việc dồn tất cả các công việc vào lúc 23:59. Hãy phân bổ dueTime rải rác trong ngày (Ví dụ: 09:00, 14:30, 20:00) để tạo thành một lịch trình có thể thực hiện được.\n" +
                         "\n" +
                         "[HƯỚNG DẪN HỆ THỐNG]: Nếu người dùng yêu cầu phân rã đồ án, lên lịch trình, bạn PHẢI ĐÍNH KÈM một chuỗi JSON ở CUỐI bài viết theo cấu trúc chính xác sau: " +
-                        "---TASK_START--- {\"tasks\": [{\"taskName\": \"...\", \"category\": \"...\", \"deadline\": \"dd/MM/yyyy\", \"dueTime\": \"HH:mm\", \"estimatedMinutes\": 60, \"priority\": \"Cao\"}]} ---TASK_END---. " +
+                        "---TASK_START--- {\"tasks\": [{\"taskName\": \"...\", \"description\": \"...\", \"category\": \"...\", \"deadline\": \"dd/MM/yyyy\", \"dueTime\": \"HH:mm\", \"estimatedMinutes\": 60, \"priority\": \"Cao\"}]} ---TASK_END---. " + // <-- CẬP NHẬT ĐỊNH DẠNG MẪU
                         "Phần nội dung văn bản ở trên hãy viết thật thân thiện, động viên người dùng và giải thích qua về lộ trình vừa lập.";
 
                 String finalPrompt = question + systemInstruction;
@@ -162,16 +163,19 @@ public class ChatFragment extends Fragment {
                                                 String deadline = item.getString("deadline");
                                                 String priority = item.getString("priority");
 
-                                                // Dùng optString/optInt để tránh crash nếu AI quên tạo trường này
+                                                // Dùng has() để kiểm tra an toàn tránh crash
                                                 String dueTime = item.has("dueTime") ? item.getString("dueTime") : "23:59";
                                                 int estimatedMinutes = item.has("estimatedMinutes") ? item.getInt("estimatedMinutes") : 60;
-
                                                 String category = item.has("category") ? item.getString("category") : "Gợi ý từ AI";
+
+                                                // --- HỨNG TRƯỜNG DESCRIPTION TỪ AI VỀ ---
+                                                String description = item.has("description") ? item.getString("description") : "";
 
                                                 int newId = (int) (System.currentTimeMillis() / 1000) + i;
 
-                                                // --- BƯỚC 3: DÙNG CONSTRUCTOR MỚI (7 THAM SỐ) ---
-                                                StudyTask newTask = new StudyTask(category, newId, name, deadline, priority, dueTime, estimatedMinutes, false);
+                                                // --- BƯỚC 3: DÙNG CONSTRUCTOR MỚI ---
+                                                // Truyền biến 'description' vào đúng vị trí số 4 thay vì gõ cứng chuỗi "Tạo nhanh từ..."
+                                                StudyTask newTask = new StudyTask(category, newId, name, description, deadline, priority, dueTime, estimatedMinutes, false);
 
                                                 db.collection("users")
                                                         .document(currentUid)

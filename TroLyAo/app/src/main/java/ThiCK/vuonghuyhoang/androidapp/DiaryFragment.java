@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -22,11 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DiaryFragment extends Fragment {
-
     private RecyclerView recyclerDiaries;
     private FloatingActionButton fabAddDiary;
     private DiaryAdapter diaryAdapter;
     private List<DiaryEntry> diaryList;
+
 
     public DiaryFragment() {}
 
@@ -44,6 +45,7 @@ public class DiaryFragment extends Fragment {
 
         int currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
         tvDiaryTitleHeader.setText("Nhật ký (" + currentYear + ")");
+
 
         recyclerDiaries = view.findViewById(R.id.recycler_diaries);
         fabAddDiary = view.findViewById(R.id.fab_add_diary);

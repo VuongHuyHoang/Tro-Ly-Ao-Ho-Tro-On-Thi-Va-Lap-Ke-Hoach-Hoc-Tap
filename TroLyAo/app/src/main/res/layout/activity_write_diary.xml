@@ -1,56 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F9F9F9">
+    android:background="#F8FAFC"> <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="16dp"
+    android:background="@android:color/transparent">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@android:color/white"
-        android:elevation="4dp">
+    <ImageView
+        android:id="@+id/btn_close_diary"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:padding="10dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        app:tint="#475569" />
 
-        <ImageView
-            android:id="@+id/btn_close_diary"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="8dp"
-            android:padding="12dp"
-            android:src="@drawable/ic_close" />
-        <TextView
-            android:id="@+id/tv_diary_toolbar_title"
-        android:layout_width="wrap_content"
+    <TextView
+        android:id="@+id/tv_diary_toolbar_title"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:text="Viết nhật ký hôm nay"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="Nhật ký hôm nay"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="@android:color/black"/>
+        android:textColor="#0F172A"
+        android:letterSpacing="-0.01"/>
 
-        <TextView
-            android:id="@+id/btn_save_diary"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_alignParentEnd="true"
-            android:gravity="center"
-            android:paddingHorizontal="16dp"
-            android:text="Hoàn thành"
-            android:textColor="#2196F3"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
+    <ImageView
+        android:id="@+id/btn_delete_diary"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginEnd="4dp"
+        android:padding="10dp"
+        android:src="@android:drawable/ic_menu_delete"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        app:tint="#EF4444" />
+    <TextView
+        android:id="@+id/btn_save_diary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lưu lại"
+        android:textColor="#4F46E5"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true" />
+</LinearLayout>
 
-    <EditText
-        android:id="@+id/edt_diary_content"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="16dp"
-        android:background="@android:color/transparent"
-        android:gravity="top|start"
-        android:hint="Hôm nay của bạn thế nào?..."
-        android:inputType="textMultiLine"
-        android:textColor="@android:color/black"
-        android:textSize="16sp" />
+        android:fillViewport="true"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="40dp"
+        android:clipToPadding="false"
+        android:scrollbars="none">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="400dp"
+            app:cardCornerRadius="24dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#E2E8F0">
+
+            <EditText
+                android:id="@+id/edt_diary_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:gravity="top|start"
+                android:hint="Ghi lại những điều đáng nhớ trong ngày của bạn..."
+                android:textColorHint="#94A3B8"
+                android:textColor="#0F172A"
+                android:textSize="16sp"
+                android:lineSpacingExtra="8dp"
+                android:inputType="textMultiLine|textCapSentences"
+                android:padding="24dp" />
+
+        </com.google.android.material.card.MaterialCardView>
+    </ScrollView>
 </LinearLayout>

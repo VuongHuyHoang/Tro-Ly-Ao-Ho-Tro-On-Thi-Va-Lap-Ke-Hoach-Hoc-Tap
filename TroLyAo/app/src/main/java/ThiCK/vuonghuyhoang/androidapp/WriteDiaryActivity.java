@@ -1,11 +1,14 @@
 package ThiCK.vuonghuyhoang.androidapp;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
@@ -13,6 +16,7 @@ import java.util.Map;
 
 public class WriteDiaryActivity extends AppCompatActivity {
 
+    private String diaryId = null; // Biến lưu ID nếu đang sửa bài cũ
     private EditText edtContent;
     private TextView btnSave, tvTitle;
     private ImageView btnClose;
@@ -25,6 +29,28 @@ public class WriteDiaryActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_write_diary);
+
+        if (getIntent() != null && getIntent().hasExtra("DIARY_ID")) {
+            diaryId = getIntent().getStringExtra("DIARY_ID");
+            String oldContent = getIntent().getStringExtra("DIARY_CONTENT");
+
+            // Hiện nội dung cũ lên màn hình
+            EditText edtContent = findViewById(R.id.edt_diary_content);
+            edtContent.setText(oldContent);
+        }
+
+        // 2. Ánh xạ nút Xóa (Lúc này ánh xạ trực tiếp findViewById là hoàn toàn đúng)
+        ImageView btnDeleteDiary = findViewById(R.id.btn_delete_diary);
+
+        // Nếu là tạo mới (chưa có ID) thì ẩn nút Xóa đi, nếu đang sửa bài cũ thì hiện lên
+        if (diaryId == null) {
+            btnDeleteDiary.setVisibility(View.GONE);
+        } else {
+            btnDeleteDiary.setVisibility(View.VISIBLE);
+        }
+
+        // 3. Bắt sự kiện bấm Xóa
+        btnDeleteDiary.setOnClickListener(v -> showDeleteConfirmationDialog());
 
         edtContent = findViewById(R.id.edt_diary_content);
         btnSave = findViewById(R.id.btn_save_diary);
@@ -104,5 +130,28 @@ public class WriteDiaryActivity extends AppCompatActivity {
                         btnSave.setEnabled(true);
                     });
         }
+    }
+
+    private void showDeleteConfirmationDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Xóa nhật ký này?")
+                .setMessage("Trang nhật ký này sẽ bị xóa vĩnh viễn. Bạn có chắc chắn muốn tiếp tục không?")
+                .setPositiveButton("Xóa", (dialog, which) -> {
+                    // Xóa bài viết trên Firebase
+                    FirebaseAuth auth = FirebaseAuth.getInstance();
+                    if (auth.getCurrentUser() != null && diaryId != null) {
+                        FirebaseFirestore.getInstance().collection("users")
+                                .document(auth.getCurrentUser().getUid())
+                                .collection("user_diaries")
+                                .document(diaryId)
+                                .delete()
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(this, "Đã xóa thành công!", Toast.LENGTH_SHORT).show();
+                                    finish(); // Đóng màn hình viết, quay lại danh sách
+                                });
+                    }
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
     }
 }

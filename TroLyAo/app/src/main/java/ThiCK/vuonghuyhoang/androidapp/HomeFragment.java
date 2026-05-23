@@ -90,8 +90,17 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onHeaderLongClick(String categoryName) {
-                // Kích hoạt hộp thoại hỏi xóa toàn bộ danh mục khi nhấn giữ
-                showDeleteCategoryDialog(categoryName);
+                String[] options = {"✏️ Đổi tên danh mục", "🗑️ Xóa toàn bộ danh mục"};
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Tùy chọn: " + categoryName)
+                        .setItems(options, (dialog, which) -> {
+                            if (which == 0) {
+                                showRenameCategoryDialog(categoryName); // Gọi hàm Đổi tên
+                            } else if (which == 1) {
+                                showDeleteCategoryDialog(categoryName); // Gọi hàm Xóa cũ của bạn
+                            }
+                        })
+                        .show();
             }
         });
 
@@ -564,4 +573,71 @@ public class HomeFragment extends Fragment {
             Toast.makeText(requireContext(), "Lỗi đồng bộ vị trí: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         });
     }
+
+private void showRenameCategoryDialog(String oldCategoryName) {
+    android.widget.LinearLayout layout = new android.widget.LinearLayout(requireContext());
+    layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+    int paddingPx = (int) (20 * getResources().getDisplayMetrics().density);
+    layout.setPadding(paddingPx, paddingPx, paddingPx, 0);
+
+    com.google.android.material.textfield.TextInputLayout textInputLayout = new com.google.android.material.textfield.TextInputLayout(requireContext());
+    textInputLayout.setHint("Tên danh mục mới");
+    textInputLayout.setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE);
+
+    TextInputEditText edtNewName = new TextInputEditText(textInputLayout.getContext());
+    edtNewName.setText(oldCategoryName); // Đưa tên cũ vào để sửa
+    edtNewName.setSingleLine(true);
+    textInputLayout.addView(edtNewName);
+    layout.addView(textInputLayout);
+
+    new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Đổi tên danh mục")
+            .setView(layout)
+            .setPositiveButton("Lưu thay đổi", (dialog, which) -> {
+                String newName = edtNewName.getText().toString().trim();
+                if (!newName.isEmpty() && !newName.equals(oldCategoryName)) {
+                    executeRenameCategory(oldCategoryName, newName);
+                }
+            })
+            .setNegativeButton("Hủy", null)
+            .show();
+}
+private void executeRenameCategory(String oldCategoryName, String newCategoryName) {
+    FirebaseAuth auth = FirebaseAuth.getInstance();
+    if (auth.getCurrentUser() != null) {
+        String currentUid = auth.getCurrentUser().getUid();
+
+        // 1. Quét tìm tất cả các Task thuộc danh mục cũ
+        FirebaseFirestore.getInstance()
+                .collection("users").document(currentUid)
+                .collection("user_tasks")
+                .whereEqualTo("category", oldCategoryName)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        // 2. Mở một phiên giao dịch hàng loạt (Batch)
+                        com.google.firebase.firestore.WriteBatch batch = FirebaseFirestore.getInstance().batch();
+
+                        for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                            // 3. Đưa lệnh Đổi Tên (Update) vào hàng đợi của Batch
+                            batch.update(doc.getReference(), "category", newCategoryName);
+                        }
+
+                        // 4. Bấm nút "Enter" gửi toàn bộ lên máy chủ
+                        batch.commit().addOnSuccessListener(aVoid -> {
+                            Toast.makeText(requireContext(), "Đã đổi tên danh mục thành công!", Toast.LENGTH_SHORT).show();
+
+                            // Nếu thư mục cũ đang mở, ta chuyển trạng thái sang mở thư mục mới
+                            if (expandedCategories.contains(oldCategoryName)) {
+                                expandedCategories.remove(oldCategoryName);
+                                expandedCategories.add(newCategoryName);
+                            }
+                        }).addOnFailureListener(e -> {
+                            Toast.makeText(requireContext(), "Lỗi khi đổi tên: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                })
+                .addOnFailureListener(e -> Toast.makeText(requireContext(), "Lỗi kết nối dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+}
 }

@@ -51,11 +51,24 @@
             android:textColor="@color/textColorSecondary"
             android:layout_marginBottom="20dp"/>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_pick_file"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="📎 Đính kèm File (.pdf, .docx)"
+            android:textColor="#4F46E5"
+            app:strokeColor="#4F46E5"
+            app:cornerRadius="12dp"
+            app:icon="@android:drawable/ic_menu_add"
+            app:iconTint="#4F46E5"/>
+
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="16dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
             app:strokeWidth="1dp"
@@ -85,6 +98,55 @@
             </com.google.android.material.textfield.TextInputLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Mức độ câu hỏi:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/textColorSecondary"
+            android:layout_marginBottom="12dp"/>
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggle_difficulty"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginBottom="24dp"
+            app:singleSelection="true"
+            app:selectionRequired="true"
+            app:checkedButton="@+id/btn_diff_medium">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_diff_easy"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Cơ bản"
+                android:textColor="#0F172A"
+                app:strokeColor="#CBD5E1"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_diff_medium"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Trung bình"
+                android:textColor="#0F172A"
+                app:strokeColor="#CBD5E1"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_diff_hard"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Nâng cao"
+                android:textColor="#0F172A"
+                app:strokeColor="#CBD5E1"/>
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_generate_quiz"
             android:layout_width="match_parent"
@@ -93,7 +155,7 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@android:color/white"
-            app:backgroundTint="#4CAF50"
+            app:backgroundTint="#4F46E5"
             app:cornerRadius="14dp"
             app:icon="@android:drawable/ic_menu_compass"
             app:iconGravity="textStart"

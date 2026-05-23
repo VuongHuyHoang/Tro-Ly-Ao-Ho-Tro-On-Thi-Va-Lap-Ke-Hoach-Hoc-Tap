@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardBackgroundColor="#FFFFFF"
+    app:strokeWidth="1dp"
+    app:strokeColor="#E2E8F0"
+    app:cardElevation="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="?attr/selectableItemBackground"> <TextView
+        android:id="@+id/tv_preview_question"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="1. Đây là nội dung câu hỏi?"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#0F172A"
+        android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_preview_answers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="- Đáp án A\n- Đáp án B\n- Đáp án C\n- Đáp án D"
+            android:textSize="14sp"
+            android:textColor="#475569"
+            android:lineSpacingExtra="4dp"/>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

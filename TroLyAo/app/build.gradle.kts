@@ -51,7 +51,7 @@ android {
 }
 
 dependencies {
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
     //vẽ biểu đồ
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     // Thư viện xử lý mạng và JSON

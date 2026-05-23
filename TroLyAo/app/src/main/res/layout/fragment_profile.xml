@@ -14,25 +14,38 @@
     android:paddingBottom="40dp"
     android:gravity="center_horizontal">
 
-    <com.google.android.material.card.MaterialCardView
+    <FrameLayout
         android:layout_width="96dp"
         android:layout_height="96dp"
-        app:cardCornerRadius="48dp"
-        app:cardBackgroundColor="#4F46E5"
-        app:cardElevation="8dp"
-        app:strokeWidth="0dp"
         android:layout_marginBottom="16dp">
 
-        <TextView
-            android:id="@+id/tv_avatar_text"
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="US"
-            android:textColor="#FFFFFF"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:gravity="center"/>
-    </com.google.android.material.card.MaterialCardView>
+            app:cardCornerRadius="48dp"
+            app:cardBackgroundColor="#4F46E5"
+            app:cardElevation="8dp"
+            app:strokeWidth="0dp">
+
+            <TextView
+                android:id="@+id/tv_avatar_text"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="US"
+                android:textColor="#FFFFFF"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                android:gravity="center"/>
+        </com.google.android.material.card.MaterialCardView>
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/img_main_avatar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:elevation="9dp"
+            app:civ_border_width="2dp"
+            app:civ_border_color="#FFFFFF"
+            android:visibility="gone"/> </FrameLayout>
 
     <TextView
         android:id="@+id/tv_profile_name"

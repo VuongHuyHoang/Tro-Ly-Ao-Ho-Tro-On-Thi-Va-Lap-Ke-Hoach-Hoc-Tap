@@ -51,6 +51,8 @@ android {
 }
 
 dependencies {
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
     //vẽ biểu đồ
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")

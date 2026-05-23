@@ -150,19 +150,22 @@ public class CalendarGridAdapter extends RecyclerView.Adapter<CalendarGridAdapte
             if (dayTasks.size() > 0) {
                 holder.tvTaskOverflow.setVisibility(View.VISIBLE);
                 holder.tvTaskOverflow.setText("+" + dayTasks.size() + " việc");
+                holder.tvTaskOverflow.setTextSize(11);
             } else {
                 holder.tvTaskOverflow.setVisibility(View.GONE);
             }
         } else
             {
-            layoutParams.height = dpToPx(holder.itemView.getContext(), 95);
+            layoutParams.height = dpToPx(holder.itemView.getContext(), 105);
         if (dayTasks.size() > 0)
             setMiniTaskStyle(holder.tvMiniTask1, dayTasks.get(0), colorHigh, colorMedium, colorLow, colorDone);
         if (dayTasks.size() > 1)
             setMiniTaskStyle(holder.tvMiniTask2, dayTasks.get(1), colorHigh, colorMedium, colorLow, colorDone);
+
                 if (dayTasks.size() > 2) {
                     holder.tvTaskOverflow.setVisibility(View.VISIBLE);
                     holder.tvTaskOverflow.setText("+" + (dayTasks.size() - 2) + " việc");
+                    holder.tvTaskOverflow.setTextSize(11);
                 } else {
                     holder.tvTaskOverflow.setVisibility(View.GONE);
                 }

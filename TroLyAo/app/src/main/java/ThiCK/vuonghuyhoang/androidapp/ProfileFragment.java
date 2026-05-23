@@ -1,13 +1,17 @@
 package ThiCK.vuonghuyhoang.androidapp;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -28,21 +32,48 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+
 public class ProfileFragment extends Fragment {
 
+    private de.hdodenhof.circleimageview.CircleImageView imgMainAvatar;
     private TextView tvCountDone, tvCountPending;
     private TextView tvProfileName, tvProfileInfo, tvAvatarText;
     private MaterialButton btnLogout, btnEditProfile;
 
-    // Các biến lưu thông tin hiện tại để truyền vào Bottom Sheet
     private String currentName = "";
     private String currentMssv = "";
-    private PieChart pieChart;
-    private com.google.android.material.button.MaterialButton btnQuizHistory;
     private String currentClass = "";
+    private String currentAvatarUri = ""; // Bổ sung biến lưu đường dẫn ảnh
+
+    private PieChart pieChart;
+    private MaterialButton btnQuizHistory;
+
+    // --- BIẾN QUẢN LÝ ẢNH ĐẠI DIỆN TRONG BOTTOM SHEET ---
+    private CircleImageView currentBottomSheetAvatar;
+    private Uri tempSelectedImageUri = null; // Lưu tạm ảnh người dùng vừa chọn nhưng chưa bấm Lưu
+    private ActivityResultLauncher<Intent> pickImageLauncher;
 
     public ProfileFragment() {
         // Constructor rỗng
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // ĐĂNG KÝ BỘ ĐÓN KẾT QUẢ CHỌN ẢNH NGAY KHI FRAGMENT VỪA TẠO
+        pickImageLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        tempSelectedImageUri = result.getData().getData();
+                        // Đổ ảnh lên Avatar trong Bottom Sheet ngay lập tức
+                        if (currentBottomSheetAvatar != null && tempSelectedImageUri != null) {
+                            currentBottomSheetAvatar.setImageURI(tempSelectedImageUri);
+                        }
+                    }
+                }
+        );
     }
 
     @Nullable
@@ -55,7 +86,7 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Ánh xạ các view cũ
+        imgMainAvatar = view.findViewById(R.id.img_main_avatar);
         tvCountDone = view.findViewById(R.id.tv_count_done);
         tvCountPending = view.findViewById(R.id.tv_count_pending);
         btnLogout = view.findViewById(R.id.btn_logout);
@@ -64,8 +95,6 @@ public class ProfileFragment extends Fragment {
         tvAvatarText = view.findViewById(R.id.tv_avatar_text);
         btnQuizHistory = view.findViewById(R.id.btn_quiz_history);
         pieChart = view.findViewById(R.id.pieChart);
-
-        // Ánh xạ nút sửa mới thêm
         btnEditProfile = view.findViewById(R.id.btn_edit_profile);
 
         btnQuizHistory.setOnClickListener(v -> {
@@ -73,10 +102,8 @@ public class ProfileFragment extends Fragment {
             startActivity(intent);
         });
 
-        // 1. Sự kiện nút Chỉnh sửa hồ sơ
         btnEditProfile.setOnClickListener(v -> showEditProfileBottomSheet());
 
-        // Sự kiện nút Đăng xuất (Giữ nguyên)
         btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(getActivity(), LoginActivity.class);
@@ -85,13 +112,9 @@ public class ProfileFragment extends Fragment {
             Toast.makeText(requireContext(), "Đã đăng xuất thành công!", Toast.LENGTH_SHORT).show();
         });
 
-        // 2. Đọc thông tin và gán dữ liệu ban đầu từ Firestore
         loadUserProfileData();
-
-        // 3. Đếm số lượng task realtime bằng SnapshotListener (Giữ nguyên đoạn cũ của bạn)
         loadRealtimeTaskCounts();
     }
-
 
     private void loadUserProfileData() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -103,25 +126,26 @@ public class ProfileFragment extends Fragment {
                     .document(currentUid)
                     .get()
                     .addOnSuccessListener(documentSnapshot -> {
-                        // Kiểm tra an toàn: Đảm bảo Fragment vẫn đang gắn với Activity
                         if (!isAdded() || getActivity() == null) return;
 
                         if (documentSnapshot.exists()) {
                             UserProfile userProfile = documentSnapshot.toObject(UserProfile.class);
                             if (userProfile != null) {
-                                // Lưu trữ lại vào biến toàn cục để phục vụ sửa đổi
                                 currentName = userProfile.getFullName();
                                 currentMssv = userProfile.getStudentId();
                                 currentClass = userProfile.getClassName();
 
-                                // Đổ lên giao diện TextViews
+                                // Lấy đường dẫn ảnh cũ nếu có
+                                if (documentSnapshot.contains("avatarUri")) {
+                                    currentAvatarUri = documentSnapshot.getString("avatarUri");
+                                }
+
                                 updateProfileUi(currentName, currentMssv, currentClass);
+                                // TODO (Tương lai): Đổ currentAvatarUri lên Avatar tròn ngoài trang chính (nếu bạn có thiết kế)
                             }
 
-                            // CẬP NHẬT GIAO DIỆN NÚT BẤM LỊCH SỬ THAY VÌ TEXTVIEW
                             if (documentSnapshot.contains("highScore")) {
                                 long highScore = documentSnapshot.getLong("highScore");
-                                // Kiểm tra biến btnQuizHistory đã được ánh xạ chưa trước khi set chữ
                                 if (btnQuizHistory != null) {
                                     btnQuizHistory.setText("Lịch sử ôn tập (Điểm cao: " + highScore + ")");
                                 }
@@ -131,7 +155,6 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    // Hàm cập nhật chữ và Avatar ký tự lên UI mảnh nhỏ
     private void updateProfileUi(String name, String mssv, String className) {
         tvProfileName.setText(name);
         tvProfileInfo.setText("MSSV: " + mssv + " | Lớp: " + className);
@@ -144,9 +167,18 @@ public class ProfileFragment extends Fragment {
                 tvAvatarText.setText(lastName.substring(0, 1).toUpperCase());
             }
         }
+
+        if (currentAvatarUri != null && !currentAvatarUri.isEmpty()) {
+            imgMainAvatar.setVisibility(View.VISIBLE);
+
+            com.bumptech.glide.Glide.with(this)
+                    .load(android.net.Uri.parse(currentAvatarUri))
+                    .into(imgMainAvatar);
+        } else {
+            imgMainAvatar.setVisibility(View.GONE);
+        }
     }
 
-    // HÀM HIỂN THỊ BOTTOM SHEET SỬA THÔNG TIN CÁ NHÂN
     private void showEditProfileBottomSheet() {
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
         View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.layout_bottom_sheet_edit_profile, null);
@@ -156,7 +188,23 @@ public class ProfileFragment extends Fragment {
         TextInputEditText edtClass = sheetView.findViewById(R.id.edt_edit_class);
         MaterialButton btnSave = sheetView.findViewById(R.id.btn_save_profile);
 
-        // Tự động điền dữ liệu cũ đang hiển thị vào ô nhập liệu
+        // --- ÁNH XẠ AVATAR VÀ BẮT SỰ KIỆN CHỌN ẢNH ---
+        currentBottomSheetAvatar = sheetView.findViewById(R.id.img_edit_avatar);
+        tempSelectedImageUri = null; // Reset biến tạm mỗi lần mở Sheet
+
+        if (currentAvatarUri != null && !currentAvatarUri.isEmpty()) {
+            com.bumptech.glide.Glide.with(this)
+                    .load(android.net.Uri.parse(currentAvatarUri))
+                    .into(currentBottomSheetAvatar);
+        }
+
+        // Sự kiện: Bấm vào ảnh để đổi ảnh mới
+        currentBottomSheetAvatar.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("image/*");
+            pickImageLauncher.launch(intent);
+        });
+
         edtName.setText(currentName);
         edtMssv.setText(currentMssv);
         edtClass.setText(currentClass);
@@ -167,7 +215,7 @@ public class ProfileFragment extends Fragment {
             String newClass = edtClass.getText().toString().trim();
 
             if (newName.isEmpty() || newMssv.isEmpty() || newClass.isEmpty()) {
-                Toast.makeText(requireContext(), "Không được để trống bất kỳ trường nào!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Không được để trống thông tin chữ!", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -175,23 +223,31 @@ public class ProfileFragment extends Fragment {
             if (auth.getCurrentUser() != null) {
                 String currentUid = auth.getCurrentUser().getUid();
 
-                // Tạo map đóng gói các trường cần chỉnh sửa cập nhật dập đè
                 Map<String, Object> updates = new HashMap<>();
                 updates.put("fullName", newName);
                 updates.put("studentId", newMssv);
                 updates.put("className", newClass);
+
+                // Nếu người dùng có chọn ảnh mới, lưu luôn đường dẫn Uri đó lên Firestore
+                if (tempSelectedImageUri != null) {
+                    updates.put("avatarUri", tempSelectedImageUri.toString());
+                }
 
                 FirebaseFirestore.getInstance()
                         .collection("profiles")
                         .document(currentUid)
                         .update(updates)
                         .addOnSuccessListener(aVoid -> {
-                            // Cập nhật lại biến RAM hiện tại
                             currentName = newName;
                             currentMssv = newMssv;
                             currentClass = newClass;
 
-                            // Cập nhật ngay lập tức lên màn hình TextView mà không cần tải lại app
+                            // Cập nhật đường dẫn gốc
+                            if (tempSelectedImageUri != null) {
+                                currentAvatarUri = tempSelectedImageUri.toString();
+                                // Bổ sung: Gọi hàm update avatar ngoài trang chủ ở đây nếu bạn muốn
+                            }
+
                             updateProfileUi(newName, newMssv, newClass);
 
                             Toast.makeText(requireContext(), "Cập nhật hồ sơ thành công!", Toast.LENGTH_SHORT).show();
@@ -237,7 +293,6 @@ public class ProfileFragment extends Fragment {
 
         PieDataSet dataSet = new PieDataSet(entries, "");
 
-        // Thiết lập màu sắc (Xanh lá cho hoàn thành, Đỏ cam cho đang xử lý)
         int[] colors = {Color.parseColor("#4CAF50"), Color.parseColor("#FF5722")};
         dataSet.setColors(colors);
         dataSet.setValueTextSize(18f);
@@ -246,17 +301,16 @@ public class ProfileFragment extends Fragment {
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
 
-        // Cấu hình thẩm mỹ
         com.github.mikephil.charting.components.Legend legend = pieChart.getLegend();
-        legend.setTextSize(12f); // Tăng kích thước chữ chú thích
-        legend.setFormSize(12f); // Tăng kích thước ô vuông màu bên cạnh chữ chú thích
-        legend.setXEntrySpace(25f);       // Tăng khoảng cách ngang giữa mục "Hoàn thành" và "Đang xử lý"
+        legend.setTextSize(12f);
+        legend.setFormSize(12f);
+        legend.setXEntrySpace(25f);
         legend.setFormToTextSpace(10f);
         pieChart.setUsePercentValues(true);
         pieChart.getDescription().setEnabled(false);
-        pieChart.setHoleRadius(40f); // Tạo lỗ ở giữa (biểu đồ vòng)
+        pieChart.setHoleRadius(40f);
         pieChart.setTransparentCircleRadius(45f);
-        pieChart.animateY(1000); // Hiệu ứng xoay khi hiện ra
-        pieChart.invalidate(); // Vẽ lại
+        pieChart.animateY(1000);
+        pieChart.invalidate();
     }
 }

@@ -21,8 +21,41 @@
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="@color/primaryColor"
-        android:layout_marginBottom="20dp"/>
+        android:layout_marginBottom="24dp"/>
 
+    <FrameLayout
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="24dp">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/img_edit_avatar"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@mipmap/ic_launcher"
+            app:civ_border_width="2dp"
+            app:civ_border_color="@color/primaryColor"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="@color/primaryColor"
+            app:cardElevation="2dp">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_edit"
+                app:tint="@android:color/white"/>
+
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

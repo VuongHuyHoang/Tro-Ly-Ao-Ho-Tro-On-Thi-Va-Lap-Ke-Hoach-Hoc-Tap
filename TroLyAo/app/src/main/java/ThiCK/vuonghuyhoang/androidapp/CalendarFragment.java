@@ -263,6 +263,7 @@ public class CalendarFragment extends Fragment {
 
         String selectedDateStr = String.format("%02d/%02d/%d", currentSelectedDate.get(Calendar.DAY_OF_MONTH), currentSelectedDate.get(Calendar.MONTH) + 1, currentSelectedDate.get(Calendar.YEAR));
 
+        // 1. Lọc ra các công việc có ngày bằng với ngày đang chọn trên lịch
         for (StudyTask task : allTasksList) {
             if (selectedDateStr.equals(task.getDeadline())) {
                 displayTasksList.add(task);
@@ -272,24 +273,39 @@ public class CalendarFragment extends Fragment {
         Collections.sort(displayTasksList, new Comparator<StudyTask>() {
             @Override
             public int compare(StudyTask t1, StudyTask t2) {
+                // Tiêu chí 1: Nếu 1 cái đã làm xong, đẩy nó xuống dưới cùng
                 int compComplete = Boolean.compare(t1.isCompleted(), t2.isCompleted());
                 if (compComplete != 0) return compComplete;
+
+                // Tiêu chí 2: Sắp xếp theo Thời gian (Due Time) - Từ sáng đến tối
+                String time1 = t1.getDueTime() != null ? t1.getDueTime() : "23:59";
+                String time2 = t2.getDueTime() != null ? t2.getDueTime() : "23:59";
+                int compTime = time1.compareTo(time2);
+
+                // NẾU KHÁC GIỜ: Sắp xếp theo giờ bình thường
+                if (compTime != 0) {
+                    return compTime;
+                }
+
+                // NẾU TRÙNG GIỜ (compTime == 0): Tiêu chí 3 là Độ ưu tiên (Cao lên trước)
                 return getPriorityWeight(t2.getPriority()) - getPriorityWeight(t1.getPriority());
             }
 
+            // Hàm phụ trợ tính điểm ưu tiên (Tái sử dụng lại logic của bạn)
             private int getPriorityWeight(String priority) {
                 if (priority == null) return 1;
                 switch (priority) {
                     case "Cao": return 3;
                     case "Trung bình": return 2;
-                    default: return 1;
+                    default: return 1; // Thấp
                 }
             }
         });
 
+        // 3. Đóng gói lại vào Wrapper và cập nhật giao diện
         agendaWrappers.clear();
         for (StudyTask task : displayTasksList) {
-            agendaWrappers.add(new TaskWrapper(task)); // Bọc task lại thành wrapper
+            agendaWrappers.add(new TaskWrapper(task));
         }
         agendaAdapter.notifyDataSetChanged();
         checkEmptyState();
